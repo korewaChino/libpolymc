@@ -1,4 +1,6 @@
-use anyhow::Result;
+use std::io::{stderr, stdout, Read, Write};
+
+use anyhow::{anyhow, Context, Result};
 use clap::{App, Arg, ArgMatches};
 use libpolymc::auth::Auth;
 use libpolymc::instance::Instance;
@@ -45,7 +47,7 @@ pub(crate) fn app() -> App<'static> {
         )
 }
 
-pub(crate) fn run(sub_matches: &ArgMatches) -> Result<()> {
+pub(crate) fn run(sub_matches: &ArgMatches) -> Result<i32> {
     debug!("Running raw minecraft installation");
     let java = sub_matches.value_of("java").unwrap();
     debug!("using java: {}", java);
@@ -61,8 +63,36 @@ pub(crate) fn run(sub_matches: &ArgMatches) -> Result<()> {
 
     let mut running = java.start(&instance, auth)?;
 
-    let output = running.process.wait_with_output()?;
-    info!("stdout: {}", String::from_utf8_lossy(&output.stderr));
+    let mut c_stdout = running
+        .process
+        .stdout
+        .take()
+        .context("Failed to get stdout")?;
+    let mut c_stderr = running
+        .process
+        .stderr
+        .take()
+        .context("Failed to get stderr")?;
 
-    Ok(())
+    std::thread::spawn(move || loop {
+        let mut buf = [0u8; 255];
+        match c_stdout.read(&mut buf) {
+            Ok(_) => stdout().write(&mut buf),
+            Err(_) => return,
+        };
+        std::thread::sleep(std::time::Duration::from_micros(100));
+    });
+
+    std::thread::spawn(move || loop {
+        let mut buf = [0u8; 255];
+        match c_stderr.read(&mut buf) {
+            Ok(_) => stderr().write(&mut buf),
+            Err(_) => return,
+        };
+        std::thread::sleep(std::time::Duration::from_micros(100));
+    });
+
+    let exit = running.process.wait()?;
+
+    exit.code().ok_or(anyhow!("Failed to get exit code"))
 }

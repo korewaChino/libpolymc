@@ -74,7 +74,6 @@ impl Java {
     pub fn start<'a>(&self, instance: &'a Instance, auth: Auth) -> Result<RunningInstance<'a>> {
         // TODO: check java version before starting minecraft
 
-        debug!("java: {}", &self.java.display());
         let mut command = Command::new(&self.java);
         command
             .arg(format!("-Xms{}", instance.config.min))
@@ -116,7 +115,8 @@ impl Java {
             .arg("net.minecraft.client.main.Main")
             .arg("--username")
             .arg(auth.get_username())
-            .args(&instance.java_opts);
+            .args(&instance.java_opts)
+            .current_dir(&instance.minecraft_path);
 
         debug!(
             "Starting minecraft: {} {:?}",
