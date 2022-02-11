@@ -16,9 +16,8 @@ pub struct LibraryName {
 }
 
 impl LibraryName {
-    pub fn at_path<S: AsRef<std::ffi::OsStr> + ?Sized>(&self, path: &S) -> PathBuf {
+    pub fn base_path_at<S: AsRef<std::ffi::OsStr> + ?Sized>(&self, path: &S) -> PathBuf {
         let mut path = Path::new(path).to_path_buf();
-
         self.namespace
             .split('.')
             .map(|v| path.push(v))
@@ -26,6 +25,12 @@ impl LibraryName {
 
         path.push(&self.name);
         path.push(&self.version);
+
+        path
+    }
+
+    pub fn path_at<S: AsRef<std::ffi::OsStr> + ?Sized>(&self, path: &S) -> PathBuf {
+        let mut path = self.base_path_at(path);
 
         if self.extra_versions.len() != 0 {
             path.push(format!(
@@ -36,6 +41,28 @@ impl LibraryName {
             ));
         } else {
             path.push(format!("{}-{}.jar", self.name, self.version));
+        }
+
+        path
+    }
+
+    pub fn path_at_natives<S: AsRef<std::ffi::OsStr> + ?Sized>(
+        &self,
+        path: &S,
+        natives: &str,
+    ) -> PathBuf {
+        let mut path = self.base_path_at(path);
+
+        if self.extra_versions.len() != 0 {
+            path.push(format!(
+                "{}-{}-{}-{}.jar",
+                self.name,
+                self.version,
+                self.extra_versions.join("-"),
+                natives
+            ));
+        } else {
+            path.push(format!("{}-{}-{}.jar", self.name, self.version, natives));
         }
 
         path
@@ -65,7 +92,7 @@ impl FromStr for LibraryName {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s: Vec<&str> = s.split(':').collect();
         if s.len() < 3 {
-            return Err(Error::InvalidLibraryName);
+            return Err(Error::LibraryInvalidName);
         }
 
         let mut extra_versions = Vec::new();
@@ -98,7 +125,7 @@ mod test {
         assert_eq!(name_parsed.to_string(), name);
 
         assert_eq!(
-            name_parsed.at_path(""),
+            name_parsed.path_at(""),
             Path::new("ca/weblite/java-objc-bridge/1.0.0/java-objc-bridge-1.0.0.jar")
         );
 
@@ -112,7 +139,7 @@ mod test {
         assert_eq!(name_parsed.to_string(), name);
 
         assert_eq!(
-            name_parsed.at_path(""),
+            name_parsed.path_at(""),
             Path::new("com/mojang/minecraft/1.18.1/minecraft-1.18.1-client.jar")
         )
     }
