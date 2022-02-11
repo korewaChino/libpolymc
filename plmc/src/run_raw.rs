@@ -5,7 +5,7 @@ use clap::{App, Arg, ArgMatches};
 use libpolymc::auth::Auth;
 use libpolymc::instance::Instance;
 use libpolymc::java_wrapper::Java;
-use log::{debug, info};
+use log::{debug, info, trace};
 
 pub(crate) fn app() -> App<'static> {
     App::new("run-raw")
@@ -45,6 +45,12 @@ pub(crate) fn app() -> App<'static> {
                 .takes_value(true)
                 .multiple_values(true),
         )
+        .arg(
+            Arg::new("library_path")
+                .long("library-path")
+                .env("PLMC_LIB_PATH")
+                .takes_value(true),
+        )
 }
 
 pub(crate) fn run(sub_matches: &ArgMatches) -> Result<i32> {
@@ -58,8 +64,13 @@ pub(crate) fn run(sub_matches: &ArgMatches) -> Result<i32> {
     // TODO: more than offline
     let auth = Auth::new_offline(auth);
 
-    let instance = Instance::new(auth.get_username(), version, dir);
+    let mut instance = Instance::new(auth.get_username(), version, dir);
     let java = Java::new(java);
+
+    if let Some(lib) = sub_matches.value_of("library_path") {
+        trace!("Setting library path to: {}", lib);
+        instance.set_libraries_path(lib);
+    }
 
     let mut running = java.start(&instance, auth)?;
 

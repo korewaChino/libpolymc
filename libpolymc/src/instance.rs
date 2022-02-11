@@ -82,8 +82,6 @@ impl Instance {
         self.libraries_path = Some(Path::new(path).to_path_buf());
     }
 
-
-
     /// Get the current libraries path.
     /// This will default onto the default .minecraft/libraries path.
     pub fn get_libraries_path(&self) -> PathBuf {
@@ -110,8 +108,6 @@ impl Instance {
         }
     }
 }
-
-
 
 #[cfg(test)]
 mod test {
