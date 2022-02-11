@@ -97,8 +97,6 @@ impl Java {
             .arg("-XX:G1ReservePercent=20")
             .arg("-XX:MaxGCPauseMillis=50")
             .arg("-XX:G1HeapRegionSize=32M")
-            .arg("--username")
-            .arg(auth.get_username())
             .arg("--version")
             .arg(&instance.version)
             .arg("--gameDir")
@@ -114,12 +112,16 @@ impl Java {
             .arg("--height")
             .arg(instance.config.height.to_string())
             .arg("-cp")
+            .arg(&instance.get_jar_path().display().to_string())
             .arg("net.minecraft.client.main.Main")
+            .arg("--username")
+            .arg(auth.get_username())
             .args(&instance.java_opts);
 
         debug!(
-            "Starting minecraft: {}",
-            command.get_program().to_str().unwrap_or("error")
+            "Starting minecraft: {} {:?}",
+            command.get_program().to_str().unwrap_or("error"),
+            command.get_args()
         );
 
         let process = command

@@ -34,6 +34,8 @@ pub struct Instance {
     pub assets_path: Option<PathBuf>,
     /// Path to Minecraft's Java libraries
     pub libraries_path: Option<PathBuf>,
+    /// Path to the minecraft.jar
+    pub jar_path: Option<PathBuf>,
     /// Java options to pass to Minecraft.
     pub java_opts: Vec<String>,
 
@@ -52,6 +54,7 @@ impl Instance {
             minecraft_path: Path::new(minecraft_path).to_path_buf(),
             assets_path: None,
             libraries_path: None,
+            jar_path: None,
             java_opts: Vec::new(),
             config: Default::default(),
         }
@@ -79,19 +82,36 @@ impl Instance {
         self.libraries_path = Some(Path::new(path).to_path_buf());
     }
 
+
+
     /// Get the current libraries path.
-    /// This will default onto the default bin/version folder inside the minecraft path.
+    /// This will default onto the default .minecraft/libraries path.
     pub fn get_libraries_path(&self) -> PathBuf {
         if let Some(path) = &self.libraries_path {
             path.to_owned()
         } else {
             let mut path = self.minecraft_path.clone();
-            path.push("bin");
+            path.push("libraries");
+            path
+        }
+    }
+
+    /// Get the current minecraft.jar path.
+    /// This will default onto the default versions/<version>/<version>.jar path.
+    pub fn get_jar_path(&self) -> PathBuf {
+        if let Some(path) = &self.jar_path {
+            path.to_owned()
+        } else {
+            let mut path = self.minecraft_path.clone();
+            path.push("versions");
             path.push(&self.version);
+            path.push(format!("{}.jar", self.version));
             path
         }
     }
 }
+
+
 
 #[cfg(test)]
 mod test {
