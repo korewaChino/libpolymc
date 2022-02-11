@@ -5,7 +5,7 @@ use clap::{App, Arg, ArgMatches};
 use libpolymc::auth::Auth;
 use libpolymc::instance::Instance;
 use libpolymc::java_wrapper::Java;
-use log::{debug, info, trace};
+use log::*;
 
 pub(crate) fn app() -> App<'static> {
     App::new("run-raw")
@@ -88,7 +88,7 @@ pub(crate) fn run(sub_matches: &ArgMatches) -> Result<i32> {
     std::thread::spawn(move || loop {
         let mut buf = [0u8; 255];
         match c_stdout.read(&mut buf) {
-            Ok(_) => stdout().write(&mut buf),
+            Ok(_) => stdout().write(&mut buf).unwrap(),
             Err(_) => return,
         };
         std::thread::sleep(std::time::Duration::from_micros(100));
@@ -97,7 +97,7 @@ pub(crate) fn run(sub_matches: &ArgMatches) -> Result<i32> {
     std::thread::spawn(move || loop {
         let mut buf = [0u8; 255];
         match c_stderr.read(&mut buf) {
-            Ok(_) => stderr().write(&mut buf),
+            Ok(_) => stderr().write(&mut buf).unwrap(),
             Err(_) => return,
         };
         std::thread::sleep(std::time::Duration::from_micros(100));

@@ -1,12 +1,11 @@
 use anyhow::{Context, Result};
 use clap::{App, Arg, ArgMatches};
-use libpolymc::meta::minecraft::{Manifest, OS};
+use libpolymc::meta::manifest::{Manifest, OS};
 use log::trace;
 use std::fs::OpenOptions;
-use std::io::Read;
 
 pub(crate) fn app() -> App<'static> {
-    App::new("minecraft")
+    App::new("manifest")
         .about("Parse a minecraft meta definition")
         .arg(
             Arg::new("file")
@@ -37,7 +36,7 @@ pub(crate) fn run(sub_matches: &ArgMatches) -> Result<i32> {
         .open(file)
         .context("Opening input file")?;
 
-    let meta = libpolymc::meta::minecraft::Manifest::from_reader(file)?;
+    let meta = libpolymc::meta::manifest::Manifest::from_reader(&mut file)?;
 
     match sub_matches.subcommand() {
         Some(("lib", sub_matches)) => return run_lib(sub_matches, meta),

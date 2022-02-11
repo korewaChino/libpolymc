@@ -1,7 +1,7 @@
 mod meta;
 mod run_raw;
 
-use clap::{App, Arg, ColorChoice};
+use clap::{App, ColorChoice};
 
 fn main() {
     let ret = main_ret();

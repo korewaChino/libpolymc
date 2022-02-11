@@ -1,4 +1,3 @@
-use crate::meta::LibraryName;
 use log::{debug, trace};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -34,7 +33,7 @@ pub struct Manifest {
 }
 
 impl Manifest {
-    pub fn from_reader<R: std::io::Read>(reader: R) -> Result<Self> {
+    pub fn from_reader<R: std::io::Read>(reader: &mut R) -> Result<Self> {
         Ok(serde_json::from_reader(reader)?)
     }
 
@@ -152,10 +151,7 @@ impl Library {
 
         let digest = digest.finish();
 
-        let hash = &self
-            .select_for(platform)
-            .ok_or(Error::LibraryNotSupported)?;
-        let hash = hex::decode(&hash.sha1)?;
+        let hash = hex::decode(&artifact.sha1)?;
 
         if digest.as_ref() == &hash {
             trace!("{} is valid", self.name);
@@ -260,4 +256,142 @@ pub struct Requirement {
     pub equals: String,
     pub suggests: String,
     pub uid: String,
+}
+
+#[derive(Debug, Clone, serde_with::SerializeDisplay, serde_with::DeserializeFromStr)]
+pub struct LibraryName {
+    pub namespace: String,
+    pub name: String,
+    pub version: String,
+    pub extra_versions: Vec<String>,
+}
+
+impl LibraryName {
+    pub fn base_path_at<S: AsRef<std::ffi::OsStr> + ?Sized>(&self, path: &S) -> PathBuf {
+        let mut path = Path::new(path).to_path_buf();
+        self.namespace
+            .split('.')
+            .map(|v| path.push(v))
+            .for_each(drop);
+
+        path.push(&self.name);
+        path.push(&self.version);
+
+        path
+    }
+
+    pub fn path_at<S: AsRef<std::ffi::OsStr> + ?Sized>(&self, path: &S) -> PathBuf {
+        let mut path = self.base_path_at(path);
+
+        if self.extra_versions.len() != 0 {
+            path.push(format!(
+                "{}-{}-{}.jar",
+                self.name,
+                self.version,
+                self.extra_versions.join("-")
+            ));
+        } else {
+            path.push(format!("{}-{}.jar", self.name, self.version));
+        }
+
+        path
+    }
+
+    pub fn path_at_natives<S: AsRef<std::ffi::OsStr> + ?Sized>(
+        &self,
+        path: &S,
+        natives: &str,
+    ) -> PathBuf {
+        let mut path = self.base_path_at(path);
+
+        if self.extra_versions.len() != 0 {
+            path.push(format!(
+                "{}-{}-{}-{}.jar",
+                self.name,
+                self.version,
+                self.extra_versions.join("-"),
+                natives
+            ));
+        } else {
+            path.push(format!("{}-{}-{}.jar", self.name, self.version, natives));
+        }
+
+        path
+    }
+}
+
+impl std::fmt::Display for LibraryName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.extra_versions.len() != 0 {
+            write!(
+                f,
+                "{}:{}:{}:{}",
+                self.namespace,
+                self.name,
+                self.version,
+                self.extra_versions.join(":")
+            )
+        } else {
+            write!(f, "{}:{}:{}", self.namespace, self.name, self.version)
+        }
+    }
+}
+
+impl std::str::FromStr for LibraryName {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s: Vec<&str> = s.split(':').collect();
+        if s.len() < 3 {
+            return Err(Error::LibraryInvalidName);
+        }
+
+        let mut extra_versions = Vec::new();
+        for s in &s[3..] {
+            extra_versions.push(s.to_string());
+        }
+
+        Ok(Self {
+            namespace: s[0].to_owned(),
+            name: s[1].to_owned(),
+            version: s[2].to_owned(),
+            extra_versions,
+        })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn libraryname() {
+        let name = "ca.weblite:java-objc-bridge:1.0.0";
+
+        let name_parsed: LibraryName = name.parse().unwrap();
+        assert_eq!(name_parsed.namespace, "ca.weblite");
+        assert_eq!(name_parsed.name, "java-objc-bridge");
+        assert_eq!(name_parsed.version, "1.0.0");
+
+        assert_eq!(name_parsed.to_string(), name);
+
+        assert_eq!(
+            name_parsed.path_at(""),
+            Path::new("ca/weblite/java-objc-bridge/1.0.0/java-objc-bridge-1.0.0.jar")
+        );
+
+        let name = "com.mojang:minecraft:1.18.1:client";
+        let name_parsed: LibraryName = name.parse().unwrap();
+        assert_eq!(name_parsed.namespace, "com.mojang");
+        assert_eq!(name_parsed.name, "minecraft");
+        assert_eq!(name_parsed.version, "1.18.1");
+        assert_eq!(name_parsed.extra_versions, vec!["client"]);
+
+        assert_eq!(name_parsed.to_string(), name);
+
+        assert_eq!(
+            name_parsed.path_at(""),
+            Path::new("com/mojang/minecraft/1.18.1/minecraft-1.18.1-client.jar")
+        )
+    }
 }

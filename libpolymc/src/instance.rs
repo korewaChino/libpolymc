@@ -1,4 +1,3 @@
-use crate::auth::Auth;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
@@ -72,7 +71,7 @@ impl Instance {
             path.to_owned()
         } else {
             let mut path = self.minecraft_path.clone();
-            path.push("assets").to_owned();
+            path.push("assets");
             path
         }
     }
