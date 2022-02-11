@@ -2,12 +2,33 @@ use crate::auth::Auth;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
+pub struct InstanceGameConfig {
+    pub min: String, // TODO: create enum type?
+    pub max: String,
+
+    pub width: u32,
+    pub height: u32,
+}
+
+impl Default for InstanceGameConfig {
+    fn default() -> Self {
+        Self {
+            min: "512M".to_owned(),
+            max: "1024M".to_owned(),
+            width: 854,
+            height: 480,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
 pub struct Instance {
     /// Name of the Minecraft instance given by the user.
     pub name: String,
     /// The version string of the instance.
     pub version: String,
-    /// Path to the minecraft.jar
+    /// Path to the base directory
     pub minecraft_path: PathBuf,
     /// Path to Minecraft's assets
     pub assets_path: Option<PathBuf>,
@@ -15,6 +36,8 @@ pub struct Instance {
     pub libraries_path: Option<PathBuf>,
     /// Java options to pass to Minecraft.
     pub java_opts: Vec<String>,
+
+    pub config: InstanceGameConfig,
 }
 
 impl Instance {
@@ -30,6 +53,7 @@ impl Instance {
             assets_path: None,
             libraries_path: None,
             java_opts: Vec::new(),
+            config: Default::default(),
         }
     }
 
