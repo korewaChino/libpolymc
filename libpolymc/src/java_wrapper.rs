@@ -118,9 +118,13 @@ impl Java {
             .current_dir(&instance.minecraft_path);
 
         debug!(
-            "Starting minecraft: {} {:?}",
+            "Starting minecraft: {} {}",
             command.get_program().to_str().unwrap_or("error"),
-            command.get_args()
+            command
+                .get_args()
+                .map(|s| s.to_str().unwrap_or("error"))
+                .collect::<Vec<&str>>()
+                .join(" ")
         );
 
         let process = command
