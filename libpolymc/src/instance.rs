@@ -115,7 +115,7 @@ mod test {
     use std::path::Path;
 
     #[test]
-    fn get_assets_path() {
+    fn get_path() {
         let instance = Instance::new("test", "0.0.0", "/not/existing");
 
         assert_eq!(
@@ -124,7 +124,7 @@ mod test {
         );
         assert_eq!(
             instance.get_libraries_path(),
-            Path::new("/not/existing/bin/0.0.0")
+            Path::new("/not/existing/libraries")
         );
 
         let mut instance = instance;
@@ -132,7 +132,7 @@ mod test {
         assert_eq!(instance.get_assets_path(), Path::new("/assets/path"));
         assert_eq!(
             instance.get_libraries_path(),
-            Path::new("/not/existing/bin/0.0.0")
+            Path::new("/not/existing/libraries/")
         );
 
         instance.set_libraries_path("/libraries/path");

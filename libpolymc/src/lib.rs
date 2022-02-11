@@ -3,5 +3,6 @@ pub mod auth;
 pub mod error;
 pub mod instance;
 pub mod java_wrapper;
+pub mod meta;
 
 pub use error::{Error, Result};
