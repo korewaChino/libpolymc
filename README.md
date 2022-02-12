@@ -1,2 +1,5 @@
 # libpolymc
-A Proposed new backend for PolyMC's instance management system
+
+libpolymc is a new proposed (and WIP) Minecraft launcher library for [PolyMC](https://github.com/PolyMC/PolyMC) that can be used to manage multiple Minecraft instances and create custom launchers.
+
+It also comes with an example CLI implementation called `plmc` that can be used to launch Minecraft instances directly from the command line.
