@@ -1,6 +1,7 @@
 use crate::meta::manifest::Sha256Sum;
 use crate::meta::{MetaIndexPackage, PackageVersion};
 use std::ffi::CString;
+use std::fmt::{Display, Formatter};
 use std::os::raw::c_char;
 use std::path::PathBuf;
 
@@ -27,6 +28,17 @@ impl FileType {
             Self::Library => ring::digest::SHA1_OUTPUT_LEN,
             _ => ring::digest::SHA256_OUTPUT_LEN,
         }
+    }
+}
+
+impl Display for FileType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::MetaIndex => "meta_index",
+            Self::Index => "index",
+            Self::Manifest => "manifest",
+            Self::Library => "library",
+        })
     }
 }
 

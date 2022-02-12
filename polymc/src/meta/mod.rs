@@ -1,7 +1,15 @@
+use libc::c_int;
 use log::*;
 use std::ffi::CStr;
+use std::fs::{File, OpenOptions};
 use std::io::Read;
 use std::os::raw::c_char;
+
+#[cfg(all(feature = "ctypes", target_family = "unix"))]
+use std::os::unix::io::{FromRawFd, RawFd};
+
+#[cfg(all(feature = "ctypes", target_family = "windows"))]
+use std::os::windows::io::{FromRawHandle, RawHandle};
 
 use crate::{Error, Result};
 
@@ -179,6 +187,74 @@ impl MetaManager {
                 self.load_manifest(manifest)
             }
             _ => Err(Error::MetaNotFound),
+        }
+    }
+
+    pub fn load_file(&mut self, file: &str, file_type: FileType) -> Result<()> {
+        debug!("Loading file {file} for type {file_type}");
+        let mut file = OpenOptions::new().read(true).open(file)?;
+
+        self.load_reader(&mut file, file_type)
+    }
+
+    /// Load file into MetaManager.
+    ///
+    /// # Safety
+    /// file has to be a valid CStr pointing to a file.
+    #[cfg(feature = "ctypes")]
+    #[doc(hidden)]
+    #[export_name = "meta_manager_load_file"]
+    pub unsafe extern "C" fn load_file_c(
+        &mut self,
+        file: *const c_char,
+        file_type: FileType,
+    ) -> c_int {
+        let file = unsafe { CStr::from_ptr(file) }.to_str();
+        if file.is_err() {
+            return -libc::EINVAL;
+        }
+
+        if let Err(e) = self.load_file(file.unwrap(), file_type) {
+            -e.as_c_error()
+        } else {
+            0
+        }
+    }
+
+    /// Load file into MetaManager.
+    ///
+    /// # Safety
+    /// fd has to be a valid fd.
+    #[cfg(all(feature = "ctypes", target_family = "unix"))]
+    #[doc(hidden)]
+    #[export_name = "meta_manager_load_fd"]
+    pub unsafe extern "C" fn load_fd(&mut self, fd: RawFd, file_type: FileType) -> c_int {
+        let mut file = unsafe { File::from_raw_fd(fd) };
+
+        if let Err(e) = self.load_reader(&mut file, file_type) {
+            -e.as_c_error()
+        } else {
+            0
+        }
+    }
+
+    /// Load file into MetaManager.
+    ///
+    /// # Safety
+    /// Handle has to be a valid file handle.
+    #[cfg(all(feature = "ctypes", target_family = "windows"))]
+    #[export_name = "meta_manager_load_handle"]
+    pub unsafe extern "C" fn load_handle(
+        &mut self,
+        handle: RawHandle,
+        file_type: FileType,
+    ) -> c_int {
+        let mut file = unsafe { File::from_raw_handle(handle) };
+
+        if let Err(e) = self.load_reader(&mut file, file_type) {
+            -e.as_c_error()
+        } else {
+            0
         }
     }
 
