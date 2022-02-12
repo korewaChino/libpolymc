@@ -1,5 +1,3 @@
-use libc::c_int;
-use log::*;
 use std::ffi::CStr;
 use std::fs::{File, OpenOptions};
 use std::io::Read;
@@ -10,6 +8,9 @@ use std::os::unix::io::{FromRawFd, RawFd};
 
 #[cfg(all(feature = "ctypes", target_family = "windows"))]
 use std::os::windows::io::{FromRawHandle, RawHandle};
+
+use libc::c_int;
+use log::*;
 
 use crate::{Error, Result};
 
@@ -170,6 +171,25 @@ impl MetaManager {
         Ok(())
     }
 
+    pub fn load(&mut self, data: &str, file_type: FileType) -> Result<()> {
+        debug!("Loading(str) {:?}", file_type);
+        match file_type {
+            FileType::MetaIndex => {
+                let index = data.parse()?;
+                self.load_meta_index(index)
+            }
+            FileType::Index => {
+                let package = data.parse()?;
+                self.load_index(package)
+            }
+            FileType::Manifest => {
+                let manifest = data.parse()?;
+                self.load_manifest(manifest)
+            }
+            _ => Err(Error::MetaNotFound),
+        }
+    }
+
     /// The user has to ensure the hash does match
     pub fn load_reader<R: Read>(&mut self, reader: &mut R, file_type: FileType) -> Result<()> {
         debug!("Loading {:?}", file_type);
@@ -184,6 +204,25 @@ impl MetaManager {
             }
             FileType::Manifest => {
                 let manifest = Manifest::from_reader(reader)?;
+                self.load_manifest(manifest)
+            }
+            _ => Err(Error::MetaNotFound),
+        }
+    }
+
+    pub fn load_data(&mut self, data: &[u8], file_type: FileType) -> Result<()> {
+        debug!("Loading(data) {:?}", file_type);
+        match file_type {
+            FileType::MetaIndex => {
+                let index = MetaIndex::from_data(data)?;
+                self.load_meta_index(index)
+            }
+            FileType::Index => {
+                let package = PackageIndex::from_data(data)?;
+                self.load_index(package)
+            }
+            FileType::Manifest => {
+                let manifest = Manifest::from_data(data)?;
                 self.load_manifest(manifest)
             }
             _ => Err(Error::MetaNotFound),
@@ -252,6 +291,48 @@ impl MetaManager {
         let mut file = unsafe { File::from_raw_handle(handle) };
 
         if let Err(e) = self.load_reader(&mut file, file_type) {
+            -e.as_c_error()
+        } else {
+            0
+        }
+    }
+
+    /// Load string into MetaManager
+    ///
+    /// # Safety
+    /// Data has to be a valid pointer to a string holding the json of the type *file_type*.
+    #[cfg(feature = "ctypes")]
+    #[doc(hidden)]
+    #[export_name = "meta_manager_load"]
+    pub unsafe extern "C" fn load_c(&mut self, data: *const c_char, file_type: FileType) -> c_int {
+        let data = unsafe { CStr::from_ptr(data) }.to_str();
+        if data.is_err() {
+            return -libc::EINVAL;
+        }
+
+        if let Err(e) = self.load(data.unwrap(), file_type) {
+            -e.as_c_error()
+        } else {
+            0
+        }
+    }
+
+    /// Load string into MetaManager
+    ///
+    /// # Safety
+    /// Data has to be a valid pointer valid for *len* holding the json of the type *file_type*.
+    #[cfg(feature = "ctypes")]
+    #[doc(hidden)]
+    #[export_name = "meta_manager_load_data"]
+    pub unsafe extern "C" fn load_data_c(
+        &mut self,
+        data: *const c_char,
+        len: usize,
+        file_type: FileType,
+    ) -> c_int {
+        let data = unsafe { std::slice::from_raw_parts(data as *const u8, len) };
+
+        if let Err(e) = self.load_data(data, file_type) {
             -e.as_c_error()
         } else {
             0

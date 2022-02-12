@@ -1,7 +1,33 @@
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 use crate::meta::manifest::{Manifest, Requirement, Sha256Sum};
 use crate::{Error, Result};
+
+macro_rules! from_str_json {
+    ($type:ident) => {
+        impl FromStr for $type {
+            type Err = $crate::Error;
+
+            fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+                Ok(serde_json::from_str(s)?)
+            }
+        }
+
+        impl $type {
+            /// Parse data from reader into [`Self`].
+            pub fn from_reader<R: std::io::Read>(reader: &mut R) -> Result<Self> {
+                Ok(serde_json::from_reader(reader)?)
+            }
+
+            /// Parse slice of data into [`Self`].
+            pub fn from_data(data: &[u8]) -> Result<Self> {
+                Ok(serde_json::from_slice(data)?)
+            }
+        }
+    };
+}
+pub(crate) use from_str_json;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -11,10 +37,6 @@ pub struct MetaIndex {
 }
 
 impl MetaIndex {
-    pub fn from_reader<R: std::io::Read>(reader: &mut R) -> Result<Self> {
-        Ok(serde_json::from_reader(reader)?)
-    }
-
     pub fn get_uid_mut(&mut self, uid: &str) -> Result<&mut MetaIndexPackage> {
         for package in &mut self.packages {
             if package.uid == uid {
@@ -35,6 +57,8 @@ impl MetaIndex {
         Err(Error::MetaNotFound)
     }
 }
+
+from_str_json!(MetaIndex);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -58,10 +82,6 @@ pub struct PackageIndex {
 }
 
 impl PackageIndex {
-    pub fn from_reader<R: std::io::Read>(reader: &mut R) -> Result<Self> {
-        Ok(serde_json::from_reader(reader)?)
-    }
-
     pub fn find_version_mut(&mut self, version: &str) -> Result<&mut PackageVersion> {
         for package in &mut self.versions {
             if package.version == version {
@@ -82,6 +102,8 @@ impl PackageIndex {
         Err(Error::MetaNotFound)
     }
 }
+
+from_str_json!(PackageIndex);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

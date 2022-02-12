@@ -35,14 +35,6 @@ pub struct Manifest {
 }
 
 impl Manifest {
-    pub fn from_reader<R: std::io::Read>(reader: &mut R) -> Result<Self> {
-        Ok(serde_json::from_reader(reader)?)
-    }
-
-    pub fn parse_str(input: &str) -> Result<Self> {
-        Ok(serde_json::from_str(input)?)
-    }
-
     pub fn build_class_path_at<S: AsRef<std::ffi::OsStr> + ?Sized>(
         &self,
         path: &S,
@@ -95,6 +87,8 @@ impl Manifest {
         Ok(ret)
     }
 }
+
+crate::meta::index::from_str_json!(Manifest);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
