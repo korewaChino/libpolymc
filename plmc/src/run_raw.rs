@@ -2,10 +2,10 @@ use std::io::{stderr, stdout, Read, Write};
 
 use anyhow::{anyhow, Context, Result};
 use clap::{App, Arg, ArgMatches};
-use libpolymc::auth::Auth;
-use libpolymc::instance::Instance;
-use libpolymc::java_wrapper::Java;
 use log::*;
+use polymc::auth::Auth;
+use polymc::instance::Instance;
+use polymc::java_wrapper::Java;
 
 pub(crate) fn app() -> App<'static> {
     App::new("run-raw")

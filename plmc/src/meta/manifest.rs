@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use clap::{App, Arg, ArgMatches};
-use libpolymc::meta::manifest::{Manifest, OS};
 use log::trace;
+use polymc::meta::manifest::{Manifest, OS};
 use std::fs::OpenOptions;
 
 pub(crate) fn app() -> App<'static> {
@@ -36,7 +36,7 @@ pub(crate) fn run(sub_matches: &ArgMatches) -> Result<i32> {
         .open(file)
         .context("Opening input file")?;
 
-    let meta = libpolymc::meta::manifest::Manifest::from_reader(&mut file)?;
+    let meta = Manifest::from_reader(&mut file)?;
 
     match sub_matches.subcommand() {
         Some(("lib", sub_matches)) => return run_lib(sub_matches, meta),

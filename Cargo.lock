@@ -215,20 +215,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e74d72e0f9b65b5b4ca49a346af3976df0f9c61d550727f349ecd559f251a26c"
 
 [[package]]
-name = "libpolymc"
-version = "0.1.0"
-dependencies = [
- "err-derive",
- "hex",
- "libc",
- "log",
- "ring",
- "serde",
- "serde_json",
- "serde_with",
-]
-
-[[package]]
 name = "log"
 version = "0.4.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -264,9 +250,23 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
- "libpolymc",
  "log",
+ "polymc",
  "pretty_env_logger",
+]
+
+[[package]]
+name = "polymc"
+version = "0.1.0"
+dependencies = [
+ "err-derive",
+ "hex",
+ "libc",
+ "log",
+ "ring",
+ "serde",
+ "serde_json",
+ "serde_with",
 ]
 
 [[package]]

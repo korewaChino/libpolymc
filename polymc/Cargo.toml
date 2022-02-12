@@ -1,7 +1,11 @@
 [package]
-name = "libpolymc"
+name = "polymc"
 version = "0.1.0"
 edition = "2021"
+
+[lib]
+name = "polymc"
+crate-type = [ "cdylib", "staticlib", "rlib" ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
