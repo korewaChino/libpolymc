@@ -9,8 +9,6 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-
-
 use crate::{Error, Result};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -301,6 +299,22 @@ impl OS {
     pub fn get() -> Self {
         Self {
             name: "osx".to_string(),
+            version: None, // TODO
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    pub fn get() -> Self {
+        Self {
+            name: "linux".to_string(),
+            version: None, // TODO
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn get() -> Self {
+        Self {
+            name: "windows".to_string(),
             version: None, // TODO
         }
     }
