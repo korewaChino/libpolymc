@@ -13,7 +13,7 @@ pub(crate) fn app() -> App<'static> {
         .arg(
             Arg::new("java")
                 .long("java")
-                .short("j")
+                .short('j')
                 .env("PLMC_JAVA")
                 .takes_value(true)
                 .required(true),
@@ -37,7 +37,7 @@ pub(crate) fn app() -> App<'static> {
         .arg(
             Arg::new("username")
                 .long("username")
-                .short("u")
+                .short('u')
                 .env("PLMC_USERNAME")
                 .takes_value(true)
                 .required(true),
@@ -45,14 +45,14 @@ pub(crate) fn app() -> App<'static> {
         .arg(
             Arg::new("java_args")
                 .long("java-argument")
-                .short("a")
+                .short('a')
                 .takes_value(true)
                 .multiple_values(true),
         )
         .arg(
             Arg::new("library_path")
                 .long("library-path")
-                .short("l")
+                .short('l')
                 .env("PLMC_LIB_PATH")
                 .takes_value(true),
         )
