@@ -1,4 +1,3 @@
-use crate::auth::Auth;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
@@ -72,7 +71,7 @@ impl Instance {
             path.to_owned()
         } else {
             let mut path = self.minecraft_path.clone();
-            path.push("assets").to_owned();
+            path.push("assets");
             path
         }
     }
@@ -115,7 +114,7 @@ mod test {
     use std::path::Path;
 
     #[test]
-    fn get_assets_path() {
+    fn get_path() {
         let instance = Instance::new("test", "0.0.0", "/not/existing");
 
         assert_eq!(
@@ -124,7 +123,7 @@ mod test {
         );
         assert_eq!(
             instance.get_libraries_path(),
-            Path::new("/not/existing/bin/0.0.0")
+            Path::new("/not/existing/libraries")
         );
 
         let mut instance = instance;
@@ -132,7 +131,7 @@ mod test {
         assert_eq!(instance.get_assets_path(), Path::new("/assets/path"));
         assert_eq!(
             instance.get_libraries_path(),
-            Path::new("/not/existing/bin/0.0.0")
+            Path::new("/not/existing/libraries/")
         );
 
         instance.set_libraries_path("/libraries/path");

@@ -1,15 +1,26 @@
 [package]
-name = "libpolymc"
+name = "polymc"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "polymc"
+crate-type = [ "cdylib", "staticlib", "rlib" ]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = [ "ctypes" ]
+# Include symbols meant for C ffi
+ctypes = [ ]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
+serde_with = "1.12.0"
 serde_json = "1.0"
 err-derive = "0.3"
 log = "0.4.14"
+ring = "0.16.20"
+hex = "0.4.3"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.117"

@@ -1,7 +1,7 @@
 //pub const DEFAULT_ARGS: &'static [&'static str] = &["-Dminecraft.launcher.version=1.0"];
 
 use crate::auth::Auth;
-use std::os::raw::c_int;
+//use std::os::raw::c_int;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 
@@ -20,6 +20,10 @@ pub struct RunningInstance<'a> {
 }
 
 impl<'a> RunningInstance<'a> {
+    /// Return raw fd of stdin of the java process.
+    ///
+    /// # Safety
+    /// The returned fd has to be closed after use.
     #[cfg(target_family = "unix")]
     #[no_mangle]
     pub unsafe extern "C" fn running_instance_get_stdin_fd(&self) -> RawFd {
@@ -30,6 +34,10 @@ impl<'a> RunningInstance<'a> {
             .unwrap_or(-libc::ENOENT)
     }
 
+    /// Return raw fd of stdout of the java process.
+    ///
+    /// # Safety
+    /// The returned fd has to be closed after use.
     #[cfg(target_family = "unix")]
     #[no_mangle]
     pub unsafe extern "C" fn running_instance_get_stdout_fd(&self) -> RawFd {
@@ -40,6 +48,10 @@ impl<'a> RunningInstance<'a> {
             .unwrap_or(-libc::ENOENT)
     }
 
+    /// Return raw fd of stderr of the java process.
+    ///
+    /// # Safety
+    /// The returned fd has to be closed after use.
     #[cfg(target_family = "unix")]
     #[no_mangle]
     pub unsafe extern "C" fn running_instance_get_stderr_fd(&self) -> RawFd {
@@ -50,7 +62,7 @@ impl<'a> RunningInstance<'a> {
             .unwrap_or(-libc::ENOENT)
     }
 
-    #[no_mangle]
+    /*#[no_mangle]
     pub unsafe extern "C" fn running_instance_kill(mut self) -> c_int {
         if let Err(e) = self.process.kill() {
             -e.raw_os_error().unwrap_or(libc::ENOTRECOVERABLE)
@@ -58,6 +70,7 @@ impl<'a> RunningInstance<'a> {
             0
         }
     }
+    */
 }
 
 pub struct Java {
