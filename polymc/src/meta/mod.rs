@@ -41,7 +41,7 @@ impl MetaManager {
 
     /// continue search
     pub fn continue_search(&mut self) -> Result<SearchResult> {
-        if self.wants.len() == 0 {
+        if self.wants.is_empty() {
             return Err(Error::MetaNotFound);
         }
 
@@ -99,7 +99,7 @@ impl MetaManager {
         Ok(ret)
     }
 
-    pub fn check_requirements(&self, reqs: &Vec<Requirement>) -> Vec<Wants> {
+    pub fn check_requirements(&self, reqs: &[Requirement]) -> Vec<Wants> {
         let mut ret = Vec::new();
 
         for req in reqs {

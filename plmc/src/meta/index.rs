@@ -93,7 +93,7 @@ async fn run_search(sub_matches: &ArgMatches) -> Result<i32> {
 
     loop {
         let search = meta_manager.continue_search()?;
-        if search.requests.len() == 0 {
+        if search.requests.is_empty() {
             break;
         }
 
@@ -110,7 +110,7 @@ async fn run_search(sub_matches: &ArgMatches) -> Result<i32> {
 async fn download<C: Connect + Clone + Send + Sync + 'static>(
     client: &mut Client<C>,
     request: &DownloadRequest,
-    lib_dir: &str,
+    _lib_dir: &str,
     meta_dir: &str,
 ) -> Result<(File, FileType)> {
     match request {

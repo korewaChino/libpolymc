@@ -39,7 +39,7 @@ pub(crate) fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let meta = Manifest::from_reader(&mut file)?;
 
     match sub_matches.subcommand() {
-        Some(("lib", sub_matches)) => return run_lib(sub_matches, meta),
+        Some(("lib", sub_matches)) => run_lib(sub_matches, meta),
         _ => {
             println!("{:?}", meta);
             Ok(0)

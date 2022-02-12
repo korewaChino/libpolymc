@@ -92,7 +92,7 @@ impl Manifest {
             }
         }
 
-        return Ok(ret);
+        Ok(ret)
     }
 }
 
@@ -155,7 +155,7 @@ impl Library {
 
         if digest.as_ref() == artifact.sha1.as_ref() {
             trace!("{} is valid", self.name);
-            return Ok(());
+            Ok(())
         } else {
             Err(Error::LibraryInvalidHash)
         }
@@ -163,7 +163,7 @@ impl Library {
 
     pub fn required_for(&self, platform: &OS) -> bool {
         let mut allow = false;
-        if self.rules.len() == 0 {
+        if self.rules.is_empty() {
             allow = true;
         } else {
             for r in &self.rules {
@@ -350,7 +350,7 @@ impl LibraryName {
     pub fn path_at<S: AsRef<std::ffi::OsStr> + ?Sized>(&self, path: &S) -> PathBuf {
         let mut path = self.base_path_at(path);
 
-        if self.extra_versions.len() != 0 {
+        if !self.extra_versions.is_empty() {
             path.push(format!(
                 "{}-{}-{}.jar",
                 self.name,
@@ -371,7 +371,7 @@ impl LibraryName {
     ) -> PathBuf {
         let mut path = self.base_path_at(path);
 
-        if self.extra_versions.len() != 0 {
+        if !self.extra_versions.is_empty() {
             path.push(format!(
                 "{}-{}-{}-{}.jar",
                 self.name,
@@ -389,7 +389,7 @@ impl LibraryName {
 
 impl std::fmt::Display for LibraryName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.extra_versions.len() != 0 {
+        if !self.extra_versions.is_empty() {
             write!(
                 f,
                 "{}:{}:{}:{}",

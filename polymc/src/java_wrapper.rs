@@ -20,6 +20,10 @@ pub struct RunningInstance<'a> {
 }
 
 impl<'a> RunningInstance<'a> {
+    /// Return raw fd of stdin of the java process.
+    ///
+    /// # Safety
+    /// The returned fd has to be closed after use.
     #[cfg(target_family = "unix")]
     #[no_mangle]
     pub unsafe extern "C" fn running_instance_get_stdin_fd(&self) -> RawFd {
@@ -30,6 +34,10 @@ impl<'a> RunningInstance<'a> {
             .unwrap_or(-libc::ENOENT)
     }
 
+    /// Return raw fd of stdout of the java process.
+    ///
+    /// # Safety
+    /// The returned fd has to be closed after use.
     #[cfg(target_family = "unix")]
     #[no_mangle]
     pub unsafe extern "C" fn running_instance_get_stdout_fd(&self) -> RawFd {
@@ -40,6 +48,10 @@ impl<'a> RunningInstance<'a> {
             .unwrap_or(-libc::ENOENT)
     }
 
+    /// Return raw fd of stderr of the java process.
+    ///
+    /// # Safety
+    /// The returned fd has to be closed after use.
     #[cfg(target_family = "unix")]
     #[no_mangle]
     pub unsafe extern "C" fn running_instance_get_stderr_fd(&self) -> RawFd {

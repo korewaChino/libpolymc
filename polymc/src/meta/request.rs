@@ -152,7 +152,7 @@ impl DownloadRequest {
     /// If the type is Library, this returns the expected path to save the file under.
     pub fn get_path(&self) -> Option<&std::path::Path> {
         match self {
-            Self::Library { path, .. } => Some(&path),
+            Self::Library { path, .. } => Some(path),
             _ => None,
         }
     }
