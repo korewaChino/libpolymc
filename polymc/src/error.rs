@@ -9,6 +9,9 @@ pub enum Error {
     #[error(display = "hex: {}", _0)]
     FromHex(#[source] hex::FromHexError),
 
+    #[error(display = "utf8: {}", _0)]
+    FromUtf8(#[source] std::str::Utf8Error),
+
     #[error(display = "Invalid library name")]
     LibraryInvalidName,
 
@@ -20,6 +23,9 @@ pub enum Error {
 
     #[error(display = "Library has invalid hash")]
     LibraryInvalidHash,
+
+    #[error(display = "Meta data not found for requested search")]
+    MetaNotFound,
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;

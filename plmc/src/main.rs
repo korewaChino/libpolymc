@@ -3,12 +3,13 @@ mod run_raw;
 
 use clap::{App, ColorChoice};
 
-fn main() {
-    let ret = main_ret();
+#[tokio::main]
+async fn main() {
+    let ret = main_ret().await;
     std::process::exit(ret);
 }
 
-fn main_ret() -> i32 {
+async fn main_ret() -> i32 {
     pretty_env_logger::init();
 
     let app = App::new("plmc")
@@ -21,7 +22,7 @@ fn main_ret() -> i32 {
 
     let ret = match matches.subcommand() {
         Some(("run-raw", sub_matches)) => run_raw::run(sub_matches),
-        Some(("meta", sub_matches)) => meta::run(sub_matches),
+        Some(("meta", sub_matches)) => meta::run(sub_matches).await,
         _ => unreachable!(),
     };
 

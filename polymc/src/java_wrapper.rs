@@ -1,7 +1,7 @@
 //pub const DEFAULT_ARGS: &'static [&'static str] = &["-Dminecraft.launcher.version=1.0"];
 
 use crate::auth::Auth;
-use std::os::raw::c_int;
+//use std::os::raw::c_int;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 
@@ -50,7 +50,7 @@ impl<'a> RunningInstance<'a> {
             .unwrap_or(-libc::ENOENT)
     }
 
-    #[no_mangle]
+    /*#[no_mangle]
     pub unsafe extern "C" fn running_instance_kill(mut self) -> c_int {
         if let Err(e) = self.process.kill() {
             -e.raw_os_error().unwrap_or(libc::ENOTRECOVERABLE)
@@ -58,6 +58,7 @@ impl<'a> RunningInstance<'a> {
             0
         }
     }
+    */
 }
 
 pub struct Java {

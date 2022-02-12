@@ -1,9 +1,11 @@
 use log::{debug, trace};
+use ring::digest::{SHA1_OUTPUT_LEN, SHA256_OUTPUT_LEN};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
 use crate::{Error, Result};
 
@@ -151,9 +153,7 @@ impl Library {
 
         let digest = digest.finish();
 
-        let hash = hex::decode(&artifact.sha1)?;
-
-        if digest.as_ref() == &hash {
+        if digest.as_ref() == artifact.sha1.as_ref() {
             trace!("{} is valid", self.name);
             return Ok(());
         } else {
@@ -212,7 +212,7 @@ pub struct LibraryDownloads {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LibraryDownload {
-    pub sha1: String,
+    pub sha1: Sha1Sum,
     pub size: i64,
     pub url: String,
 }
@@ -253,9 +253,76 @@ impl OS {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Requirement {
-    pub equals: String,
+    #[serde(default)]
+    pub equals: Option<String>,
     pub suggests: String,
     pub uid: String,
+}
+
+#[derive(Debug, Clone, serde_with::SerializeDisplay, serde_with::DeserializeFromStr)]
+pub struct Sha1Sum([u8; ring::digest::SHA1_OUTPUT_LEN]);
+
+impl std::fmt::Display for Sha1Sum {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&hex::encode(self.0))
+    }
+}
+
+impl FromStr for Sha1Sum {
+    type Err = Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let s = hex::decode(s)?;
+        if s.len() != ring::digest::SHA1_OUTPUT_LEN {
+            return Err(Error::LibraryInvalidHash);
+        }
+
+        let s: Option<[u8; ring::digest::SHA1_OUTPUT_LEN]> = s.try_into().ok();
+        if let Some(s) = s {
+            Ok(Self(s))
+        } else {
+            Err(Error::LibraryInvalidHash)
+        }
+    }
+}
+
+impl AsRef<[u8; ring::digest::SHA1_OUTPUT_LEN]> for Sha1Sum {
+    fn as_ref(&self) -> &[u8; SHA1_OUTPUT_LEN] {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone, serde_with::SerializeDisplay, serde_with::DeserializeFromStr)]
+pub struct Sha256Sum([u8; ring::digest::SHA256_OUTPUT_LEN]);
+
+impl std::fmt::Display for Sha256Sum {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&hex::encode(self.0))
+    }
+}
+
+impl FromStr for Sha256Sum {
+    type Err = Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let s = hex::decode(s)?;
+        if s.len() != ring::digest::SHA256_OUTPUT_LEN {
+            return Err(Error::LibraryInvalidHash);
+        }
+
+        let s: Option<[u8; ring::digest::SHA256_OUTPUT_LEN]> = s.try_into().ok();
+        if let Some(s) = s {
+            Ok(Self(s))
+        } else {
+            Err(Error::LibraryInvalidHash)
+        }
+    }
+}
+
+impl AsRef<[u8; ring::digest::SHA256_OUTPUT_LEN]> for Sha256Sum {
+    fn as_ref(&self) -> &[u8; SHA256_OUTPUT_LEN] {
+        &self.0
+    }
 }
 
 #[derive(Debug, Clone, serde_with::SerializeDisplay, serde_with::DeserializeFromStr)]

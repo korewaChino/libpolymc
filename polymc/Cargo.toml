@@ -8,6 +8,10 @@ name = "polymc"
 crate-type = [ "cdylib", "staticlib", "rlib" ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = [ "ctypes" ]
+# Include symbols meant for C ffi
+ctypes = [ ]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
