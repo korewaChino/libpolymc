@@ -62,6 +62,16 @@ impl PackageIndex {
         Ok(serde_json::from_reader(reader)?)
     }
 
+    pub fn find_version_mut(&mut self, version: &str) -> Result<&mut PackageVersion> {
+        for package in &mut self.versions {
+            if package.version == version {
+                return Ok(package);
+            }
+        }
+
+        Err(Error::MetaNotFound)
+    }
+
     pub fn find_version(&self, version: &str) -> Result<&PackageVersion> {
         for package in &self.versions {
             if package.version == version {

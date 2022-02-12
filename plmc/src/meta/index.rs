@@ -5,7 +5,7 @@ use hyper::client::connect::Connect;
 use hyper::Client;
 use log::*;
 use mktemp::Temp;
-use polymc::meta::{DownloadRequest, FileType, MetaIndex, MetaManager, Wants};
+use polymc::meta::{DownloadRequest, FileType, MetaIndex, MetaManager, SearchResult, Wants};
 use std::fs::{File, OpenOptions};
 use std::io::{Seek, SeekFrom, Write};
 use std::path::Path;
@@ -89,9 +89,10 @@ async fn run_search(sub_matches: &ArgMatches) -> Result<i32> {
     let mut meta_manager = MetaManager::new(&lib_dir, &base_url);
     let wants = Wants::new("net.minecraft", "1.18.1"); // TODO: non hardcoded values
 
-    let mut search = meta_manager.search(wants)?;
+    meta_manager.search(wants)?;
 
     loop {
+        let search = meta_manager.continue_search()?;
         if search.requests.len() == 0 {
             break;
         }
@@ -101,8 +102,6 @@ async fn run_search(sub_matches: &ArgMatches) -> Result<i32> {
             let (mut file, f_type) = download(&mut client, r, &lib_dir, &meta_dir).await?;
             meta_manager.load_reader(&mut file, f_type)?;
         }
-
-        search = meta_manager.continue_search()?;
     }
 
     Ok(0)
