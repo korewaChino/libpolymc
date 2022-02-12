@@ -1,7 +1,6 @@
 use crate::meta::manifest::Sha256Sum;
 use crate::meta::{MetaIndexPackage, PackageVersion};
 use std::ffi::CString;
-use std::fmt::format;
 use std::os::raw::c_char;
 use std::path::PathBuf;
 
@@ -102,6 +101,16 @@ impl DownloadRequest {
     #[export_name = "download_request_has_hash"]
     pub extern "C" fn has_hash(&self) -> bool {
         self.hash_size() != 0
+    }
+
+    pub fn get_hash_algo(&self) -> Option<&'static ring::digest::Algorithm> {
+        use ring::digest;
+        Some(match self {
+            Self::Index { .. } => &digest::SHA256,
+            Self::Manifest { .. } => &digest::SHA256,
+            Self::Library { .. } => &digest::SHA1_FOR_LEGACY_USE_ONLY,
+            _ => return None,
+        })
     }
 
     /// Get the hash of the file to download.

@@ -54,7 +54,7 @@ fn run_lib(sub_matches: &ArgMatches, meta: Manifest) -> Result<i32> {
 
     if sub_matches.is_present("verify") {
         let verify = meta.verify_at(dir, &os)?;
-        if verify.len() != 0 {
+        if !verify.is_empty() {
             println!("Failed to verify libraries:");
             for (lib, e) in verify {
                 println!("{}: {}", lib.name, e);

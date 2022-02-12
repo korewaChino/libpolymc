@@ -105,12 +105,12 @@ impl MetaManager {
         for req in reqs {
             for wants in &self.wants {
                 if wants.uid == req.uid {
-                    break;
+                    return ret;
                 }
             }
             for wants in &self.extra_wants {
                 if wants.uid == req.uid {
-                    break;
+                    return ret;
                 }
             }
             trace!("adding {:?} to extra_wants", req);
@@ -124,40 +124,61 @@ impl MetaManager {
         format!("{}/index.json", self.base_url)
     }
 
+    pub fn load_meta_index(&mut self, index: MetaIndex) -> Result<()> {
+        trace!("loaded meta index");
+        self.index = Some(index);
+        Ok(())
+    }
+
+    pub fn load_index(&mut self, package: PackageIndex) -> Result<()> {
+        trace!("loaded index: {}", package.uid);
+
+        let index = self
+            .index
+            .as_mut()
+            .ok_or(Error::MetaNotFound)?
+            .get_uid_mut(&package.uid)?;
+
+        index.index = Some(package);
+
+        Ok(())
+    }
+
+    pub fn load_manifest(&mut self, manifest: Manifest) -> Result<()> {
+        trace!("loaded manifest: {}", manifest.name);
+        let index = self
+            .index
+            .as_mut()
+            .ok_or(Error::MetaNotFound)?
+            .get_uid_mut(&manifest.uid)?;
+        let package = index
+            .index
+            .as_mut()
+            .ok_or(Error::MetaNotFound)?
+            .find_version_mut(&manifest.version)?;
+
+        package.manifest = Some(manifest);
+
+        Ok(())
+    }
+
     /// The user has to ensure the hash does match
     pub fn load_reader<R: Read>(&mut self, reader: &mut R, file_type: FileType) -> Result<()> {
         debug!("Loading {:?}", file_type);
         match file_type {
             FileType::MetaIndex => {
                 let index = MetaIndex::from_reader(reader)?;
-                trace!("loaded meta index");
-                self.index = Some(index);
-
-                Ok(())
+                self.load_meta_index(index)
             }
             FileType::Index => {
                 let package = PackageIndex::from_reader(reader)?;
-                trace!("loaded index: {}", package.uid);
-
-                let index = self.index.as_mut().unwrap().get_uid_mut(&package.uid)?;
-                index.index = Some(package);
-
-                Ok(())
+                self.load_index(package)
             }
             FileType::Manifest => {
                 let manifest = Manifest::from_reader(reader)?;
-                trace!("loaded manifest: {}", manifest.name);
-                let index = self.index.as_mut().unwrap().get_uid_mut(&manifest.uid)?;
-                let package = index
-                    .index
-                    .as_mut()
-                    .unwrap()
-                    .find_version_mut(&manifest.version)?;
-                package.manifest = Some(manifest);
-
-                Ok(())
+                self.load_manifest(manifest)
             }
-            _ => todo!(),
+            _ => Err(Error::MetaNotFound),
         }
     }
 

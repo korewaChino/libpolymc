@@ -5,9 +5,9 @@ use hyper::client::connect::Connect;
 use hyper::Client;
 use log::*;
 use mktemp::Temp;
-use polymc::meta::{DownloadRequest, FileType, MetaIndex, MetaManager, SearchResult, Wants};
+use polymc::meta::{DownloadRequest, FileType, MetaIndex, MetaManager, Wants};
 use std::fs::{File, OpenOptions};
-use std::io::{Seek, SeekFrom, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::Path;
 
 pub(crate) fn app() -> App<'static> {
@@ -124,13 +124,6 @@ async fn download_meta<C: Connect + Clone + Send + Sync + 'static>(
     request: &DownloadRequest,
     meta_dir: &str,
 ) -> Result<(File, FileType)> {
-    let url = request.get_url().parse()?;
-
-    let mut res = client.get(url).await?;
-    if !res.status().is_success() {
-        bail!("Failed to download file: {}", res.status());
-    }
-
     // TODO: implement digest based on has_hash
     let filename = match request {
         DownloadRequest::MetaIndex { .. } => format!("{}/index.json", meta_dir),
@@ -141,11 +134,42 @@ async fn download_meta<C: Connect + Clone + Send + Sync + 'static>(
         _ => bail!("Could not find location to store meta data in"),
     };
 
+    if Path::new(&filename).is_file() && request.has_hash() {
+        let mut file = OpenOptions::new().read(true).open(&filename)?;
+
+        let mut digest = ring::digest::Context::new(request.get_hash_algo().unwrap());
+
+        loop {
+            let mut buf = [0u8; 8192];
+            let read = file.read(&mut buf)?;
+            digest.update(&buf[..read]);
+            if read < buf.len() {
+                break;
+            }
+        }
+
+        let digest = digest.finish();
+
+        if digest.as_ref() == request.get_hash() {
+            debug!("found {} in cache", request.get_url());
+            file.seek(SeekFrom::Start(0))?;
+            return Ok((file, request.request_type()));
+        }
+        info!("Cache mismatch for {}", request.get_url());
+    }
+
     std::fs::create_dir_all(
         Path::new(&filename)
             .parent()
             .context("Filename has no parent")?,
-    );
+    )?;
+
+    let url = request.get_url().parse()?;
+
+    let mut res = client.get(url).await?;
+    if !res.status().is_success() {
+        bail!("Failed to download file: {}", res.status());
+    }
 
     let mut file = OpenOptions::new()
         .write(true)

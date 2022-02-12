@@ -511,6 +511,7 @@ dependencies = [
  "mktemp",
  "polymc",
  "pretty_env_logger",
+ "ring",
  "serde_json",
  "tokio",
 ]
