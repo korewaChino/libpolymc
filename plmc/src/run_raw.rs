@@ -16,6 +16,7 @@ pub(crate) fn app() -> App<'static> {
                 .short('j')
                 .env("PLMC_JAVA")
                 .takes_value(true)
+                .help("Path to the java executable")
                 .required(true),
         )
         .arg(
@@ -24,6 +25,7 @@ pub(crate) fn app() -> App<'static> {
                 .short('v')
                 .env("PLMC_VERSION")
                 .takes_value(true)
+                .help("The Minecraft version to run")
                 .required(true),
         )
         .arg(
@@ -32,6 +34,7 @@ pub(crate) fn app() -> App<'static> {
                 .short('d')
                 .env("PLMC_MC_DIR")
                 .takes_value(true)
+                .help("The Minecraft directory")
                 .required(true),
         )
         .arg(
@@ -40,6 +43,7 @@ pub(crate) fn app() -> App<'static> {
                 .short('u')
                 .env("PLMC_USERNAME")
                 .takes_value(true)
+                .help("The username to use for authentication")
                 .required(true),
         )
         .arg(
@@ -47,6 +51,7 @@ pub(crate) fn app() -> App<'static> {
                 .long("java-argument")
                 .short('a')
                 .takes_value(true)
+                .help("Java arguments to pass to the JVM")
                 .multiple_values(true),
         )
         .arg(
@@ -54,6 +59,7 @@ pub(crate) fn app() -> App<'static> {
                 .long("library-path")
                 .short('l')
                 .env("PLMC_LIB_PATH")
+                .help("List of libraries to add to the Minecraft classpath")
                 .takes_value(true),
         )
 }
