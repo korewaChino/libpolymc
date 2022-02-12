@@ -99,31 +99,73 @@ async fn run_search(sub_matches: &ArgMatches) -> Result<i32> {
 
         for r in &search.requests {
             info!("requested: {:?}", r);
-            let (mut file, f_type) = download(&mut client, r, &lib_dir, &meta_dir).await?;
-            meta_manager.load_reader(&mut file, f_type)?;
+            if r.is_library() {
+                download_lib(&mut client, r, &lib_dir).await?;
+            } else {
+                let (file, f_type) = download_meta(&mut client, r, &meta_dir).await?;
+                if file.is_some() {
+                    meta_manager.load_reader(&mut file.unwrap(), f_type)?;
+                }
+            }
         }
     }
 
     Ok(0)
 }
 
-async fn download<C: Connect + Clone + Send + Sync + 'static>(
+async fn download_lib<C: Connect + Clone + Send + Sync + 'static>(
     client: &mut Client<C>,
     request: &DownloadRequest,
     _lib_dir: &str,
-    meta_dir: &str,
-) -> Result<(File, FileType)> {
-    match request {
-        DownloadRequest::Library { .. } => bail!("TODO: implement downloading library"),
-        _ => download_meta(client, request, meta_dir).await,
+) -> Result<()> {
+    let filename = request.get_path().unwrap();
+
+    if verify_hash(&filename.display().to_string(), request).is_ok() {
+        return Ok(());
     }
+
+    std::fs::create_dir_all(filename.parent().context("Filename has no parent")?)?;
+
+    let url = request.get_url().parse()?;
+
+    let mut res = client.get(url).await?;
+
+    if !res.status().is_success() {
+        bail!(
+            "Failed to download file: {} ({})",
+            request.get_url(),
+            res.status()
+        );
+    }
+
+    let mut file = OpenOptions::new()
+        .write(true)
+        .read(true)
+        .create(true)
+        .append(false)
+        .open(&filename)?;
+
+    let mut digest = ring::digest::Context::new(request.get_hash_algo().unwrap());
+
+    while let Some(chunk) = res.body_mut().data().await {
+        let chunk = chunk?;
+        digest.update(&chunk);
+        file.write_all(&chunk)?;
+    }
+
+    let digest = digest.finish();
+    if digest.as_ref() != request.get_hash() {
+        bail!("Failed to download file, got invalid hash");
+    }
+
+    Ok(())
 }
 
 async fn download_meta<C: Connect + Clone + Send + Sync + 'static>(
     client: &mut Client<C>,
     request: &DownloadRequest,
     meta_dir: &str,
-) -> Result<(File, FileType)> {
+) -> Result<(Option<File>, FileType)> {
     // TODO: implement digest based on has_hash
     let filename = match request {
         DownloadRequest::MetaIndex { .. } => format!("{}/index.json", meta_dir),
@@ -134,27 +176,9 @@ async fn download_meta<C: Connect + Clone + Send + Sync + 'static>(
         _ => bail!("Could not find location to store meta data in"),
     };
 
-    if Path::new(&filename).is_file() && request.has_hash() {
-        let mut file = OpenOptions::new().read(true).open(&filename)?;
-
-        let mut digest = ring::digest::Context::new(request.get_hash_algo().unwrap());
-
-        loop {
-            let mut buf = [0u8; 8192];
-            let read = file.read(&mut buf)?;
-            digest.update(&buf[..read]);
-            if read < buf.len() {
-                break;
-            }
-        }
-
-        let digest = digest.finish();
-
-        if digest.as_ref() == request.get_hash() {
-            debug!("found {} in cache", request.get_url());
-            file.seek(SeekFrom::Start(0))?;
-            return Ok((file, request.request_type()));
-        }
+    if let Ok(file) = verify_hash(&filename, request) {
+        return Ok((Some(file), request.request_type()));
+    } else {
         info!("Cache mismatch for {}", request.get_url());
     }
 
@@ -178,11 +202,57 @@ async fn download_meta<C: Connect + Clone + Send + Sync + 'static>(
         .append(false)
         .open(&filename)?;
 
+    let mut digest = if request.has_hash() {
+        Some(ring::digest::Context::new(request.get_hash_algo().unwrap()))
+    } else {
+        None
+    };
+
     while let Some(chunk) = res.body_mut().data().await {
-        file.write_all(&chunk?)?;
+        let chunk = chunk?;
+        if let Some(digest) = digest.as_mut() {
+            digest.update(&chunk);
+        }
+        file.write_all(&chunk)?;
+    }
+
+    if let Some(digest) = digest {
+        let digest = digest.finish();
+        if digest.as_ref() != request.get_hash() {
+            return Ok((None, request.request_type()));
+        }
     }
 
     file.seek(SeekFrom::Start(0))?;
 
-    Ok((file, request.request_type()))
+    Ok((Some(file), request.request_type()))
+}
+
+fn verify_hash(filename: &str, request: &DownloadRequest) -> Result<File> {
+    if !request.has_hash() {
+        bail!("Request has no hash");
+    }
+
+    let mut file = OpenOptions::new().read(true).open(&filename)?;
+
+    let mut digest = ring::digest::Context::new(request.get_hash_algo().unwrap());
+
+    loop {
+        let mut buf = [0u8; 8192];
+        let read = file.read(&mut buf)?;
+        digest.update(&buf[..read]);
+        if read < buf.len() {
+            break;
+        }
+    }
+
+    let digest = digest.finish();
+
+    if digest.as_ref() == request.get_hash() {
+        debug!("found {} in cache", request.get_url());
+        file.seek(SeekFrom::Start(0))?;
+        return Ok(file);
+    }
+
+    bail!("Invalid Hash");
 }

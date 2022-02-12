@@ -1,11 +1,15 @@
 use log::{debug, trace};
 use ring::digest::{SHA1_OUTPUT_LEN, SHA256_OUTPUT_LEN};
 use serde::{Deserialize, Serialize};
+
+use std::cell::UnsafeCell;
 use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
+
+
 
 use crate::{Error, Result};
 
@@ -86,6 +90,53 @@ impl Manifest {
 
         Ok(ret)
     }
+
+    /// Verify all data.
+    /// # Safety
+    /// This uses write without synchronization, so only run one instance on a given dataset.
+    pub unsafe fn verify_caching_at<S: AsRef<std::ffi::OsStr> + ?Sized>(
+        &self,
+        path: &S,
+        platform: &OS,
+    ) -> Result<Vec<(Library, Error)>> {
+        let mut ret = Vec::new();
+
+        for lib in &self.libraries {
+            if !unsafe { *lib.verified.get() } && lib.required_for(platform) {
+                if let Err(e) = lib.verify_at(path, platform) {
+                    match e {
+                        Error::LibraryMissing => ret.push((lib.clone(), e)),
+                        Error::LibraryInvalidHash => ret.push((lib.clone(), e)),
+                        _ => return Err(e),
+                    }
+                } else {
+                    unsafe {
+                        let verified = &mut *lib.verified.get();
+                        *verified = true;
+                    }
+                }
+            }
+        }
+
+        if let Some(jar) = &self.main_jar {
+            if !unsafe { *jar.verified.get() } {
+                if let Err(e) = jar.verify_at(path, platform) {
+                    match e {
+                        Error::LibraryMissing => ret.push((jar.clone(), e)),
+                        Error::LibraryInvalidHash => ret.push((jar.clone(), e)),
+                        _ => return Err(e),
+                    }
+                } else {
+                    unsafe {
+                        let verified = &mut *jar.verified.get();
+                        *verified = true;
+                    }
+                }
+            }
+        }
+
+        Ok(ret)
+    }
 }
 
 crate::meta::index::from_str_json!(Manifest);
@@ -113,6 +164,9 @@ pub struct Library {
 
     #[serde(default)]
     pub rules: Vec<Rule>,
+
+    #[serde(skip)]
+    verified: std::rc::Rc<UnsafeCell<bool>>,
 }
 
 impl Library {
@@ -231,6 +285,7 @@ pub enum RuleAction {
 pub struct OS {
     pub name: String,
     pub version: Option<String>,
+    // TOOD: arch?
 }
 
 impl OS {
@@ -242,6 +297,13 @@ impl OS {
     }
 
     // TODO: add discover function
+    #[cfg(target_os = "macos")]
+    pub fn get() -> Self {
+        Self {
+            name: "osx".to_string(),
+            version: None, // TODO
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

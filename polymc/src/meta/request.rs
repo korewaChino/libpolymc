@@ -29,6 +29,11 @@ impl FileType {
             _ => ring::digest::SHA256_OUTPUT_LEN,
         }
     }
+
+    #[export_name = "download_type_is_library"]
+    pub extern "C" fn is_library(&self) -> bool {
+        matches!(self, Self::Library)
+    }
 }
 
 impl Display for FileType {
@@ -115,6 +120,11 @@ impl DownloadRequest {
         self.hash_size() != 0
     }
 
+    #[export_name = "download_request_is_library"]
+    pub extern "C" fn is_library(&self) -> bool {
+        self.request_type().is_library()
+    }
+
     pub fn get_hash_algo(&self) -> Option<&'static ring::digest::Algorithm> {
         use ring::digest;
         Some(match self {
@@ -181,5 +191,9 @@ impl DownloadRequest {
                 .unwrap_or(core::ptr::null_mut()),
             None => core::ptr::null_mut(),
         }
+    }
+
+    pub fn from_library(download: LibraryDownload, path: PathBuf) -> Self {
+        Self::Library { download, path }
     }
 }

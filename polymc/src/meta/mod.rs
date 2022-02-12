@@ -18,7 +18,7 @@ mod index;
 pub mod manifest;
 mod request;
 
-use crate::meta::manifest::{Manifest, Requirement};
+use crate::meta::manifest::{Manifest, Requirement, OS};
 pub use index::*;
 pub use request::*;
 
@@ -104,6 +104,16 @@ impl MetaManager {
 
         self.extra_wants
             .append(&mut self.check_requirements(&manifest.requires));
+
+        let os = OS::get();
+        let verify_result = unsafe { manifest.verify_caching_at(&self.library_path, &os)? };
+        for (lib, _error) in &verify_result {
+            let at = lib.path_at_for(&self.library_path, &os);
+            ret.push(DownloadRequest::from_library(
+                lib.select_for(&os).ok_or(Error::MetaNotFound)?.clone(),
+                at,
+            ))
+        }
 
         Ok(ret)
     }
