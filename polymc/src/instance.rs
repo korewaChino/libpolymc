@@ -222,12 +222,12 @@ impl Instance {
         ret.join(":")
     }
 
-    pub fn get_manifest_extra_jvm_args(&self) -> Vec<String> {
+    pub fn get_manifest_extra_jvm_args(&self, platform: &OS) -> Vec<String> {
         let mut ret = Vec::new();
 
         for (_k, v) in &self.manifests {
             for v in &v.traits {
-                if let Some(v) = Self::parse_trait(v) {
+                if let Some(v) = Self::parse_trait(v, platform) {
                     ret.push(v)
                 }
             }
@@ -236,9 +236,9 @@ impl Instance {
         ret
     }
 
-    fn parse_trait(jvm_trait: &str) -> Option<String> {
+    fn parse_trait(jvm_trait: &str, platform: &OS) -> Option<String> {
         Some(match jvm_trait {
-            "FirstThreadOnMacOS" => "-XstartOnFirstThread".to_string(),
+            "FirstThreadOnMacOS" if platform.name == "osx" => "-XstartOnFirstThread".to_string(),
             _ => {
                 log::info!("unknown jvm trait: '{jvm_trait}'");
                 return None;

@@ -9,6 +9,7 @@ use log::*;
 
 use crate::auth::Auth;
 use crate::instance::Instance;
+use crate::meta::manifest::OS;
 use crate::Result;
 
 #[derive(Debug)]
@@ -86,10 +87,11 @@ impl Java {
     pub fn start<'a>(&self, instance: &'a Instance, auth: Auth) -> Result<RunningInstance<'a>> {
         // TODO: check java version before starting minecraft
         // TODO: propagate OS from here into every leaf functions
+        let platform = OS::get();
 
         let mut command = Command::new(&self.java);
         command
-            .args(instance.get_manifest_extra_jvm_args())
+            .args(instance.get_manifest_extra_jvm_args(&platform))
             .args(&instance.java_opts)
             .arg(format!("-Xms{}", instance.config.min))
             .arg(format!("-Xmx{}", instance.config.max))
