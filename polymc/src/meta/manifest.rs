@@ -158,7 +158,7 @@ pub struct Library {
     pub natives: HashMap<String, String>,
 
     #[serde(default)]
-    pub extract: HashMap<String, Vec<String>>,
+    pub extract: Option<ExtractOptions>,
 
     #[serde(default)]
     pub rules: Vec<Rule>,
@@ -495,6 +495,13 @@ impl std::str::FromStr for LibraryName {
             extra_versions,
         })
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase", default)]
+#[cfg_attr(debug_assertions, serde(deny_unknown_fields))]
+pub struct ExtractOptions {
+    pub exclude: Vec<String>,
 }
 
 #[cfg(test)]

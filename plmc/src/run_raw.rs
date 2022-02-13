@@ -1,6 +1,6 @@
 use std::io::{stderr, stdout, Read, Write};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use clap::{App, Arg, ArgMatches};
 use log::*;
 use polymc::auth::Auth;
@@ -75,7 +75,7 @@ pub(crate) fn run(sub_matches: &ArgMatches) -> Result<i32> {
     // TODO: more than offline
     let auth = Auth::new_offline(auth);
 
-    let mut instance = Instance::new(auth.get_username(), version, dir);
+    /*let mut instance = Instance::new(auth.get_username(), version, dir);
     let java = Java::new(java);
 
     if let Some(lib) = sub_matches.value_of("library_path") {
@@ -117,4 +117,6 @@ pub(crate) fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let exit = running.process.wait()?;
 
     exit.code().ok_or(anyhow!("Failed to get exit code"))
+     */
+    bail!("Cannot find metadata")
 }

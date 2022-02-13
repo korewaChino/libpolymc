@@ -1,14 +1,13 @@
-//pub const DEFAULT_ARGS: &'static [&'static str] = &["-Dminecraft.launcher.version=1.0"];
-
-use crate::auth::Auth;
 //use std::os::raw::c_int;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 
-use log::debug;
 #[cfg(target_family = "unix")]
 use std::os::unix::io::{AsRawFd, RawFd};
 
+use log::*;
+
+use crate::auth::Auth;
 use crate::instance::Instance;
 use crate::Result;
 
@@ -86,15 +85,13 @@ impl Java {
 
     pub fn start<'a>(&self, instance: &'a Instance, auth: Auth) -> Result<RunningInstance<'a>> {
         // TODO: check java version before starting minecraft
+        // TODO: propagate OS from here into every leaf functions
 
         let mut command = Command::new(&self.java);
         command
             .arg(format!("-Xms{}", instance.config.min))
             .arg(format!("-Xmx{}", instance.config.max))
-            .arg(format!(
-                "-Djava.library.path={}",
-                instance.get_libraries_path().display()
-            ))
+            .arg(format!("-Djava.library.path={}", instance.build_natives()?))
             .arg(format!(
                 "-Dminecraft.launcher.brand={}",
                 env!("CARGO_PKG_NAME")
@@ -110,13 +107,13 @@ impl Java {
             .arg("-XX:MaxGCPauseMillis=50")
             .arg("-XX:G1HeapRegionSize=32M")
             .arg("-cp")
-            .arg(&instance.get_jar_path().display().to_string())
+            .arg(&instance.get_class_paths())
             .arg("net.minecraft.client.main.Main")
             .arg(&instance.version)
             .arg("--gameDir")
-            .arg(&instance.minecraft_path.display().to_string())
+            .arg(&instance.minecraft_path)
             .arg("--assetsDir")
-            .arg(instance.get_assets_path().display().to_string())
+            .arg(&instance.get_assets_path())
             .arg("--accessToken")
             .arg(auth.get_token().unwrap_or("0"))
             .arg("--assetIndex")
@@ -127,6 +124,8 @@ impl Java {
             .arg(instance.config.height.to_string())
             .arg("--username")
             .arg(auth.get_username())
+            .arg("--version")
+            .arg(&instance.version)
             .args(&instance.java_opts)
             .current_dir(&instance.minecraft_path);
 
@@ -139,6 +138,7 @@ impl Java {
                 .collect::<Vec<&str>>()
                 .join(" ")
         );
+        trace!("in workdir: {}", &instance.minecraft_path);
 
         let process = command
             .stdin(Stdio::piped())
