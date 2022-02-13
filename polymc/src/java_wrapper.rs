@@ -89,6 +89,8 @@ impl Java {
 
         let mut command = Command::new(&self.java);
         command
+            .args(instance.get_manifest_extra_jvm_args())
+            .args(&instance.java_opts)
             .arg(format!("-Xms{}", instance.config.min))
             .arg(format!("-Xmx{}", instance.config.max))
             .arg(format!("-Djava.library.path={}", instance.build_natives()?))
