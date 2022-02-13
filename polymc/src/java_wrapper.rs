@@ -113,7 +113,6 @@ impl Java {
             .arg("-cp")
             .arg(&instance.get_class_paths())
             .arg("net.minecraft.client.main.Main")
-            .arg(&instance.version)
             .arg("--gameDir")
             .arg(&instance.minecraft_path)
             .arg("--assetsDir")
