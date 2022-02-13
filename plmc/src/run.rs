@@ -8,6 +8,11 @@ use polymc::java_wrapper::Java;
 use polymc::meta::FileType::AssetIndex;
 use polymc::meta::{DownloadRequest, MetaManager, Wants};
 use tokio::io::{stderr, stdout};
+use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
+use rand::seq::SliceRandom;
+use rand::Rng;
+use std::time::{Duration, Instant};
+use console::{style};
 
 fn get_dir(sub: &str) -> String {
     let mut dir = dirs::data_dir().unwrap();
@@ -154,17 +159,39 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
 
     let mut client = hyper::Client::builder().build(https);
 
+    // Let's use indicatif to show the progress!
+    let mut rng = rand::thread_rng();
+    let started = Instant::now();
+    let spinner_style = ProgressStyle::default_spinner()
+        .tick_chars("-\\|/")
+        .template("{prefix:.bold.dim} {spinner} {wide_msg}");
+        println!("Downloading Assets...");
+    // get total 
+
     let search = loop {
         let search = manager.continue_search()?;
         if search.is_ready() {
             break search;
         }
-
+        // get the total amount of files to download
+        // total is search.requests's length, but we have to return the variable because rust
+        let mut total = search.requests.len();
+        let pb = ProgressBar::new(total as u64);
+        pb.set_style(spinner_style.clone());
+        pb.set_message("Loading...");
+        // draw the progress bar
         for r in &search.requests {
             info!("requested: {:?}", r);
             if r.is_file() {
+                // print download progress
+                // set the progress bar to the current file
+                pb.set_message(format!("Downloading {}", r.get_url()));
+                //println!("Downloading {}", r.get_url());
                 crate::meta::index::download_file(&mut client, r).await?;
+                pb.inc(1);
             } else {
+                // print download progress
+                pb.set_message(format!("Downloading {}", r.get_url()));
                 let (file, f_type) =
                     crate::meta::index::download_meta(&mut client, r, &meta_dir).await?;
                 if let Some(mut file) = file {
@@ -174,8 +201,10 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
                         manager.load_reader(&mut file, f_type)?;
                     }
                 }
+                pb.inc(1);
             }
         }
+        pb.finish_and_clear();
     };
 
     let mut instance = Instance::new(uid, &version, &mc_dir, search);
