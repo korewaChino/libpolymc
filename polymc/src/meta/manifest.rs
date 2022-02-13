@@ -9,6 +9,7 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+use crate::meta::AssetIndexInfo;
 use crate::{Error, Result};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,7 +19,7 @@ pub struct Manifest {
     pub traits: Vec<String>,
 
     #[serde(default)]
-    pub asset_index: Option<AssetIndex>,
+    pub asset_index: Option<AssetIndexInfo>,
     pub libraries: Vec<Library>,
     #[serde(default)]
     pub main_class: Option<String>,
@@ -138,16 +139,6 @@ impl Manifest {
 }
 
 crate::meta::index::from_str_json!(Manifest);
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AssetIndex {
-    pub id: String,
-    pub sha1: String,
-    pub size: i64,
-    pub total_size: i64,
-    pub url: String,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

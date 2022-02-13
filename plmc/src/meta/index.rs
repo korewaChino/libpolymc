@@ -31,6 +31,12 @@ pub(crate) fn app() -> App<'static> {
                         .env("PLMC_LIB_DIR"),
                 )
                 .arg(
+                    Arg::new("assets_dir")
+                        .long("assets-dir")
+                        .env("PLMC_ASSETS_DIR")
+                        .takes_value(true),
+                )
+                .arg(
                     Arg::new("meta_dir")
                         .long("meta-dir")
                         .takes_value(true)
@@ -64,6 +70,7 @@ fn run_index(sub_matches: &ArgMatches) -> Result<i32> {
 async fn run_search(sub_matches: &ArgMatches) -> Result<i32> {
     let tmp_lib = Temp::new_dir()?;
     let tmp_meta = Temp::new_dir()?;
+    let tmp_assets = Temp::new_dir()?;
     let lib_dir = if let Some(dir) = sub_matches.value_of("lib_dir") {
         dir.to_string()
     } else {
@@ -76,6 +83,12 @@ async fn run_search(sub_matches: &ArgMatches) -> Result<i32> {
         tmp_meta.display().to_string()
     };
 
+    let assets_dir = if let Some(dir) = sub_matches.value_of("assets_dir") {
+        dir.to_string()
+    } else {
+        tmp_assets.display().to_string()
+    };
+
     let base_url = sub_matches.value_of("base_url").unwrap().to_string();
 
     let https = hyper_rustls::HttpsConnectorBuilder::new()
@@ -86,7 +99,7 @@ async fn run_search(sub_matches: &ArgMatches) -> Result<i32> {
 
     let mut client = Client::builder().build(https);
 
-    let mut meta_manager = MetaManager::new(&lib_dir, &base_url);
+    let mut meta_manager = MetaManager::new(&lib_dir, &assets_dir, &base_url);
     let wants = Wants::new("net.minecraft", "1.18.1"); // TODO: non hardcoded values
 
     meta_manager.search(wants)?;
@@ -99,12 +112,15 @@ async fn run_search(sub_matches: &ArgMatches) -> Result<i32> {
 
         for r in &search.requests {
             info!("requested: {:?}", r);
-            if r.is_library() {
-                download_lib(&mut client, r, &lib_dir).await?;
+            if r.is_file() {
+                download_file(&mut client, r).await?;
             } else {
                 let (file, f_type) = download_meta(&mut client, r, &meta_dir).await?;
                 if file.is_some() {
-                    meta_manager.load_reader(&mut file.unwrap(), f_type)?;
+                    if matches!(f_type, FileType::AssetIndex) {
+                    } else {
+                        meta_manager.load_reader(&mut file.unwrap(), f_type)?;
+                    }
                 }
             }
         }
@@ -113,18 +129,21 @@ async fn run_search(sub_matches: &ArgMatches) -> Result<i32> {
     Ok(0)
 }
 
-pub async fn download_lib<C: Connect + Clone + Send + Sync + 'static>(
+pub async fn download_file<C: Connect + Clone + Send + Sync + 'static>(
     client: &mut Client<C>,
     request: &DownloadRequest,
-    _lib_dir: &str,
 ) -> Result<()> {
     let filename = request.get_path().unwrap();
 
-    if verify_hash(&filename.display().to_string(), request).is_ok() {
+    if verify_hash(&filename, request).is_ok() {
         return Ok(());
     }
 
-    std::fs::create_dir_all(filename.parent().context("Filename has no parent")?)?;
+    std::fs::create_dir_all(
+        Path::new(filename)
+            .parent()
+            .context("Filename has no parent")?,
+    )?;
 
     let url = request.get_url().parse()?;
 
@@ -172,6 +191,9 @@ pub async fn download_meta<C: Connect + Clone + Send + Sync + 'static>(
         DownloadRequest::Index { uid, .. } => format!("{}/{}/index.json", meta_dir, uid),
         DownloadRequest::Manifest { uid, version, .. } => {
             format!("{}/{}/{}.json", meta_dir, uid, version)
+        }
+        DownloadRequest::AssetIndex { info, uid, .. } => {
+            format!("{}/{}/assets/{}.json", meta_dir, uid, info.id)
         }
         _ => bail!("Could not find location to store meta data in"),
     };

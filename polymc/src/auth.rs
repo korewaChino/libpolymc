@@ -1,8 +1,7 @@
 // use HTTP for logging in?
 use serde_json::{json, Value};
 
-
-pub enum LoginRequest{
+pub enum LoginRequest {
     Mojang {
         username: String,
         password: String,
@@ -23,7 +22,7 @@ pub enum LoginRequest{
         client_secret: String,
         refresh_token: String,
         redirect_uri: String,
-    }
+    },
 }
 
 impl LoginRequest {
@@ -31,7 +30,7 @@ impl LoginRequest {
     // msft uses HTTP options to input data because OAuth
     // mojang sends a POST request with JSON data
 
-    pub fn new_login(&self) -> String{
+    pub fn new_login(&self) -> String {
         match self {
             LoginRequest::Mojang { username, password } => {
                 let data = json!({
@@ -43,8 +42,12 @@ impl LoginRequest {
                     "password": password,
                 });
                 data.to_string()
-            },
-            LoginRequest::Msft { client_id, redirect_uri, state } => {
+            }
+            LoginRequest::Msft {
+                client_id,
+                redirect_uri,
+                state,
+            } => {
                 let mut opts = Vec::<String>::new();
                 opts.push(format!("client_id={}", client_id));
                 opts.push("response_type=code".to_string());
@@ -53,7 +56,12 @@ impl LoginRequest {
                 opts.push(format!("state={}", state));
                 opts.join("&")
             }
-            LoginRequest::MsftToken { client_id, client_secret, code, redirect_uri } => {
+            LoginRequest::MsftToken {
+                client_id,
+                client_secret,
+                code,
+                redirect_uri,
+            } => {
                 let mut opts = Vec::<String>::new();
                 opts.push(format!("client_id={}", client_id));
                 opts.push(format!("client_secret={}", client_secret));
@@ -61,8 +69,13 @@ impl LoginRequest {
                 opts.push(format!("redirect_uri={}", redirect_uri));
                 opts.push("grant_type=authorization_code".to_string());
                 opts.join("&")
-            },
-            LoginRequest::MsftRefresh { client_id, client_secret, refresh_token, redirect_uri } => {
+            }
+            LoginRequest::MsftRefresh {
+                client_id,
+                client_secret,
+                refresh_token,
+                redirect_uri,
+            } => {
                 let mut opts = Vec::<String>::new();
                 opts.push(format!("client_id={}", client_id));
                 opts.push(format!("client_secret={}", client_secret));
@@ -70,11 +83,10 @@ impl LoginRequest {
                 opts.push("grant_type=refresh_token".to_string());
                 opts.push(format!("redirect_uri={}", redirect_uri));
                 opts.join("&")
-            },
+            }
         }
     }
 }
-
 
 pub enum Auth {
     Offline { username: String },
