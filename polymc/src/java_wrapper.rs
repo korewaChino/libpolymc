@@ -129,7 +129,7 @@ impl Java {
             .arg(auth.get_username())
             .arg("--version")
             .arg(&instance.version)
-            .args(&instance.java_opts)
+            .arg(&instance.extra_args.join(" "))
             .current_dir(&instance.minecraft_path);
 
         debug!(

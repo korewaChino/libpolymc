@@ -92,6 +92,21 @@ pub(crate) fn app() -> App<'static> {
                 .takes_value(true)
                 .multiple_values(true),
         )
+        // TODO: Implement this
+        .arg(
+            Arg::new("demo_mode")
+                .long("demo-mode")
+                .help("Run in demo mode")
+                .takes_value(false)
+                .default_value("false"),
+        )
+        .arg(
+            Arg::new("extra_args")
+                .long("extra-args")
+                .takes_value(true)
+                .help("Extra flags to pass to Minecraft")
+                .multiple_values(true),
+        )
 }
 
 pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
@@ -110,6 +125,7 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
         .value_of("mc_dir")
         .map(ToString::to_string)
         .unwrap_or_else(|| get_dir("game"));
+    let username = sub_matches.value_of("username").unwrap();
 
     let version = sub_matches.value_of("mc_version").unwrap();
     let uid = sub_matches.value_of("uid").unwrap();
@@ -149,6 +165,8 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let mut instance = Instance::new(uid, &version, &mc_dir, search);
     instance.set_libraries_path(&lib_dir);
 
+    // TODO Add support for extra flags
+
     if let Some(dir) = sub_matches.value_of("natives_dir") {
         instance.set_natives_path(dir);
     }
@@ -156,7 +174,7 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let java = sub_matches.value_of("java").unwrap();
     let java = Java::new(java);
 
-    let mut child = java.start(&instance, Auth::new_offline("foo"))?;
+    let mut child = java.start(&instance, Auth::new_offline(username))?;
 
     let mut c_stdout = child
         .process

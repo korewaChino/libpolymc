@@ -42,8 +42,10 @@ pub struct Instance {
     pub libraries_path: Option<String>,
     /// Path to Minecraft's native libraries.
     pub natives_path: Option<String>,
-    /// Java options to pass to Minecraft.
+    /// Java options to pass to the JVM.
     pub java_opts: Vec<String>,
+    /// Extra arguments to pass to Minecraft.
+    pub extra_args: Vec<String>,
 
     pub config: InstanceGameConfig,
 
@@ -66,6 +68,7 @@ impl Instance {
             libraries_path: None,
             natives_path: None,
             java_opts: Vec::new(),
+            extra_args: Vec::new(),
             config: Default::default(),
 
             uid: search_result.uid,
