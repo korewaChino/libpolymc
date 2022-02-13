@@ -109,7 +109,7 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let mc_dir = sub_matches
         .value_of("mc_dir")
         .map(ToString::to_string)
-        .unwrap_or_else(|| get_dir("lib"));
+        .unwrap_or_else(|| get_dir("game"));
 
     let version = sub_matches.value_of("mc_version").unwrap();
     let uid = sub_matches.value_of("uid").unwrap();
