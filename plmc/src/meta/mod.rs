@@ -1,4 +1,4 @@
-mod index;
+pub mod index;
 mod manifest;
 
 use anyhow::{bail, Result};

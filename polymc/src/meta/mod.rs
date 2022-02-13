@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::ffi::CStr;
 use std::fs::{File, OpenOptions};
 use std::io::Read;
@@ -27,6 +28,7 @@ pub struct MetaManager {
     pub base_url: String,
     wants: Vec<Wants>,
     extra_wants: Vec<Wants>,
+    pub manifests: HashMap<String, Manifest>,
     pub index: Option<MetaIndex>,
 }
 
@@ -38,6 +40,7 @@ impl MetaManager {
             base_url: base_url.to_string(),
             wants: Vec::new(),
             extra_wants: Vec::new(),
+            manifests: HashMap::new(),
             index: None,
         }
     }
@@ -56,7 +59,10 @@ impl MetaManager {
 
         if self.index.is_none() {
             let index = DownloadRequest::new_meta_index(self.index_url());
-            return Ok(SearchResult::new(vec![index]));
+            return Ok(SearchResult::new(
+                vec![index],
+                &self.wants.get(0).ok_or(Error::MetaNotFound)?.uid,
+            ));
         }
 
         let mut ret = Vec::new();
@@ -71,7 +77,15 @@ impl MetaManager {
             ret.append(&mut requires);
         }
 
-        Ok(SearchResult::new(ret))
+        /*Ok(SearchResult::new(
+            ret,
+            &self.wants.get(0).ok_or(Error::MetaNotFound)?.uid,
+        ))*/
+        Ok(SearchResult {
+            requests: ret,
+            manifests: self.manifests.clone(),
+            uid: self.wants.get(0).ok_or(Error::MetaNotFound)?.uid.clone(),
+        })
     }
 
     fn search_for(&mut self, what: &Wants) -> Result<Vec<DownloadRequest>> {
@@ -104,6 +118,9 @@ impl MetaManager {
 
         self.extra_wants
             .append(&mut self.check_requirements(&manifest.requires));
+
+        self.manifests
+            .insert(manifest.uid.to_string(), manifest.clone());
 
         let os = OS::get();
         let verify_result = unsafe { manifest.verify_caching_at(&self.library_path, &os)? };
@@ -433,10 +450,21 @@ impl From<Requirement> for Wants {
 
 pub struct SearchResult {
     pub requests: Vec<DownloadRequest>,
+    pub manifests: HashMap<String, Manifest>,
+    pub uid: String,
 }
 
 impl SearchResult {
-    pub fn new(requests: Vec<DownloadRequest>) -> Self {
-        Self { requests }
+    pub fn new(requests: Vec<DownloadRequest>, uid: &str) -> Self {
+        Self {
+            requests,
+            manifests: HashMap::new(),
+            uid: uid.to_string(),
+        }
+    }
+
+    #[export_name = "search_result_is_ready"]
+    pub extern "C" fn is_ready(&self) -> bool {
+        self.requests.is_empty()
     }
 }

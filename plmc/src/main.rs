@@ -1,4 +1,5 @@
 mod meta;
+mod run;
 mod run_raw;
 
 use clap::{App, ColorChoice};
@@ -16,12 +17,14 @@ async fn main_ret() -> i32 {
         .about("libpolymc cli interface")
         .color(ColorChoice::Auto)
         .subcommand(run_raw::app())
+        .subcommand(run::app())
         .subcommand(meta::app());
 
     let matches = app.get_matches();
 
     let ret = match matches.subcommand() {
         Some(("run-raw", sub_matches)) => run_raw::run(sub_matches),
+        Some(("run", sub_matches)) => run::run(sub_matches).await,
         Some(("meta", sub_matches)) => meta::run(sub_matches).await,
         _ => unreachable!(),
     };

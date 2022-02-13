@@ -113,7 +113,7 @@ async fn run_search(sub_matches: &ArgMatches) -> Result<i32> {
     Ok(0)
 }
 
-async fn download_lib<C: Connect + Clone + Send + Sync + 'static>(
+pub async fn download_lib<C: Connect + Clone + Send + Sync + 'static>(
     client: &mut Client<C>,
     request: &DownloadRequest,
     _lib_dir: &str,
@@ -161,7 +161,7 @@ async fn download_lib<C: Connect + Clone + Send + Sync + 'static>(
     Ok(())
 }
 
-async fn download_meta<C: Connect + Clone + Send + Sync + 'static>(
+pub async fn download_meta<C: Connect + Clone + Send + Sync + 'static>(
     client: &mut Client<C>,
     request: &DownloadRequest,
     meta_dir: &str,
@@ -216,12 +216,14 @@ async fn download_meta<C: Connect + Clone + Send + Sync + 'static>(
         file.write_all(&chunk)?;
     }
 
-    if let Some(digest) = digest {
+    // TODO: check hash
+    /*if let Some(digest) = digest {
         let digest = digest.finish();
         if digest.as_ref() != request.get_hash() {
+            warn!("Hash mismatch after downloading file");
             return Ok((None, request.request_type()));
         }
-    }
+    }*/
 
     file.seek(SeekFrom::Start(0))?;
 

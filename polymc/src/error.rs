@@ -14,6 +14,9 @@ pub enum Error {
     #[error(display = "utf8: {}", _0)]
     FromUtf8(#[source] std::str::Utf8Error),
 
+    #[error(display = "zip: {}", _0)]
+    FromZip(#[source] zip::result::ZipError),
+
     #[error(display = "Invalid library name")]
     LibraryInvalidName,
 
