@@ -1,6 +1,6 @@
-use crate::meta::manifest::Sha256Sum;
-use crate::meta::{MetaIndexPackage, PackageVersion};
-use std::ffi::CString;
+use crate::meta::manifest::{Sha1Sum, Sha256Sum};
+use crate::meta::{Asset, AssetIndexInfo, MetaIndexPackage, PackageVersion};
+use std::ffi::{CStr, CString};
 use std::fmt::{Display, Formatter};
 use std::os::raw::c_char;
 use std::path::PathBuf;
@@ -18,6 +18,10 @@ pub enum FileType {
     Manifest,
     /// Library File (usually a jar file)
     Library,
+    /// Asset index
+    AssetIndex,
+    /// Asset file (images, etc).
+    Asset,
 }
 
 impl FileType {
@@ -25,7 +29,7 @@ impl FileType {
     pub extern "C" fn hash_size(&self) -> usize {
         match self {
             Self::MetaIndex => 0,
-            Self::Library => ring::digest::SHA1_OUTPUT_LEN,
+            Self::Library | Self::AssetIndex | Self::Asset => ring::digest::SHA1_OUTPUT_LEN,
             _ => ring::digest::SHA256_OUTPUT_LEN,
         }
     }
@@ -33,6 +37,27 @@ impl FileType {
     #[export_name = "download_type_is_library"]
     pub extern "C" fn is_library(&self) -> bool {
         matches!(self, Self::Library)
+    }
+
+    #[export_name = "download_type_is_asset"]
+    pub extern "C" fn is_asset(&self) -> bool {
+        matches!(self, Self::Asset)
+    }
+
+    /// True if either the type is an asset or a library.
+    #[export_name = "download_type_is_file"]
+    pub extern "C" fn is_file(&self) -> bool {
+        self.is_library() || self.is_asset()
+    }
+
+    pub fn get_hash_algo(&self) -> Option<&'static ring::digest::Algorithm> {
+        use ring::digest;
+        Some(match self {
+            Self::Index => &digest::SHA256,
+            Self::Manifest => &digest::SHA256,
+            Self::Library | Self::AssetIndex | Self::Asset => &digest::SHA1_FOR_LEGACY_USE_ONLY,
+            _ => return None,
+        })
     }
 }
 
@@ -43,6 +68,8 @@ impl Display for FileType {
             Self::Index => "index",
             Self::Manifest => "manifest",
             Self::Library => "library",
+            Self::AssetIndex => "asset_index",
+            Self::Asset => "asset",
         })
     }
 }
@@ -64,8 +91,19 @@ pub enum DownloadRequest {
         hash: Sha256Sum,
     },
     Library {
-        path: PathBuf,
+        path: String,
         download: LibraryDownload,
+    },
+    AssetIndex {
+        uid: String,
+        version: String,
+        info: AssetIndexInfo,
+    },
+    Asset {
+        asset: Asset,
+        uid: String,
+        url: String,
+        path: String,
     },
 }
 
@@ -91,6 +129,13 @@ impl DownloadRequest {
         }
     }
 
+    pub fn new_library(download: LibraryDownload, path: PathBuf) -> Self {
+        Self::Library {
+            download,
+            path: path.display().to_string(),
+        }
+    }
+
     #[export_name = "download_request_type"]
     pub extern "C" fn request_type(&self) -> FileType {
         match self {
@@ -98,6 +143,8 @@ impl DownloadRequest {
             Self::Index { .. } => FileType::Index,
             Self::Manifest { .. } => FileType::Manifest,
             Self::Library { .. } => FileType::Library,
+            Self::AssetIndex { .. } => FileType::AssetIndex,
+            Self::Asset { .. } => FileType::Asset,
         }
     }
 
@@ -112,6 +159,8 @@ impl DownloadRequest {
             Self::Index { hash, .. } => hash.as_ref(),
             Self::Manifest { hash, .. } => hash.as_ref(),
             Self::Library { download, .. } => download.sha1.as_ref(),
+            Self::AssetIndex { info, .. } => info.sha1.as_ref(),
+            Self::Asset { asset, .. } => asset.hash.as_ref(),
         }
     }
 
@@ -125,14 +174,18 @@ impl DownloadRequest {
         self.request_type().is_library()
     }
 
+    #[export_name = "download_request_is_asset"]
+    pub extern "C" fn is_asset(&self) -> bool {
+        self.request_type().is_asset()
+    }
+
+    #[export_name = "download_request_is_file"]
+    pub extern "C" fn is_file(&self) -> bool {
+        self.request_type().is_file()
+    }
+
     pub fn get_hash_algo(&self) -> Option<&'static ring::digest::Algorithm> {
-        use ring::digest;
-        Some(match self {
-            Self::Index { .. } => &digest::SHA256,
-            Self::Manifest { .. } => &digest::SHA256,
-            Self::Library { .. } => &digest::SHA1_FOR_LEGACY_USE_ONLY,
-            _ => return None,
-        })
+        self.request_type().get_hash_algo()
     }
 
     /// Get the hash of the file to download.
@@ -143,9 +196,7 @@ impl DownloadRequest {
     pub extern "C" fn get_hash_c(&self) -> *const u8 {
         match self {
             Self::MetaIndex { .. } => core::ptr::null(),
-            Self::Index { hash, .. } => hash.as_ref().as_ptr(),
-            Self::Manifest { hash, .. } => hash.as_ref().as_ptr(),
-            Self::Library { download, .. } => download.sha1.as_ref().as_ptr(),
+            _ => self.get_hash().as_ptr(),
         }
     }
 
@@ -155,6 +206,8 @@ impl DownloadRequest {
             Self::Index { url, .. } => url.as_str(),
             Self::Manifest { url, .. } => url.as_str(),
             Self::Library { download, .. } => download.url.as_str(),
+            Self::AssetIndex { info, .. } => info.url.as_str(),
+            Self::Asset { url, .. } => url.as_str(),
         }
     }
 
@@ -172,9 +225,10 @@ impl DownloadRequest {
     }
 
     /// If the type is Library, this returns the expected path to save the file under.
-    pub fn get_path(&self) -> Option<&std::path::Path> {
+    pub fn get_path(&self) -> Option<&str> {
         match self {
             Self::Library { path, .. } => Some(path),
+            Self::Asset { path, .. } => Some(path),
             _ => None,
         }
     }
@@ -186,14 +240,10 @@ impl DownloadRequest {
     #[export_name = "download_request_get_path"]
     pub extern "C" fn get_path_c(&self) -> *mut c_char {
         match self.get_path() {
-            Some(p) => CString::new(p.display().to_string())
+            Some(p) => CString::new(p)
                 .map(|u| u.into_raw())
                 .unwrap_or(core::ptr::null_mut()),
             None => core::ptr::null_mut(),
         }
-    }
-
-    pub fn from_library(download: LibraryDownload, path: PathBuf) -> Self {
-        Self::Library { download, path }
     }
 }

@@ -5,7 +5,8 @@ use mktemp::Temp;
 use polymc::auth::Auth;
 use polymc::instance::Instance;
 use polymc::java_wrapper::Java;
-use polymc::meta::{MetaManager, Wants};
+use polymc::meta::FileType::AssetIndex;
+use polymc::meta::{DownloadRequest, MetaManager, Wants};
 use tokio::io::{stderr, stdout};
 
 fn get_dir(sub: &str) -> String {
@@ -72,6 +73,12 @@ pub(crate) fn app() -> App<'static> {
                 .help("The Minecraft directory"),
         )
         .arg(
+            Arg::new("assets_dir")
+                .long("assets-dir")
+                .env("PLMC_ASSETS_DIR")
+                .takes_value(true),
+        )
+        .arg(
             Arg::new("natives_dir")
                 .long("natives-dir")
                 .env("PLMC_NATIVE_DIR")
@@ -127,11 +134,16 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
         .unwrap_or_else(|| get_dir("game"));
     let username = sub_matches.value_of("username").unwrap();
 
+    let assets_dir = sub_matches
+        .value_of("assets_dir")
+        .map(ToString::to_string)
+        .unwrap_or_else(|| get_dir("assets"));
+
     let version = sub_matches.value_of("mc_version").unwrap();
     let uid = sub_matches.value_of("uid").unwrap();
     let wants = Wants::new(uid, version);
 
-    let mut manager = MetaManager::new(&lib_dir, &meta_url);
+    let mut manager = MetaManager::new(&lib_dir, &assets_dir, &meta_url);
     manager.search(wants);
 
     let https = hyper_rustls::HttpsConnectorBuilder::new()
@@ -150,13 +162,17 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
 
         for r in &search.requests {
             info!("requested: {:?}", r);
-            if r.is_library() {
-                crate::meta::index::download_lib(&mut client, r, &lib_dir).await?;
+            if r.is_file() {
+                crate::meta::index::download_file(&mut client, r).await?;
             } else {
                 let (file, f_type) =
                     crate::meta::index::download_meta(&mut client, r, &meta_dir).await?;
                 if let Some(mut file) = file {
-                    manager.load_reader(&mut file, f_type)?;
+                    if let DownloadRequest::AssetIndex { version, uid, .. } = &r {
+                        manager.load_asset_index_reader(uid, &version, &mut file)?;
+                    } else {
+                        manager.load_reader(&mut file, f_type)?;
+                    }
                 }
             }
         }

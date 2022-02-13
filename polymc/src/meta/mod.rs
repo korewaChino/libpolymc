@@ -10,22 +10,28 @@ use std::os::unix::io::{FromRawFd, RawFd};
 #[cfg(all(feature = "ctypes", target_family = "windows"))]
 use std::os::windows::io::{FromRawHandle, RawHandle};
 
+pub const ASSET_DEFAULT_URL: &'static str = "https://resources.download.minecraft.net";
+
 use libc::c_int;
 use log::*;
 
 use crate::{Error, Result};
 
+mod asset;
 mod index;
 pub mod manifest;
 mod request;
 
 use crate::meta::manifest::{Manifest, Requirement, OS};
+pub use asset::*;
 pub use index::*;
 pub use request::*;
 
 pub struct MetaManager {
     pub library_path: String,
+    pub assets_path: String,
     pub base_url: String,
+    pub assets_url: Option<String>,
     wants: Vec<Wants>,
     extra_wants: Vec<Wants>,
     pub manifests: HashMap<String, Manifest>,
@@ -34,14 +40,40 @@ pub struct MetaManager {
 
 impl MetaManager {
     /// Create A new MetaManager.
-    pub fn new(library_path: &str, base_url: &str) -> Self {
+    pub fn new(library_path: &str, assets_path: &str, base_url: &str) -> Self {
         Self {
             library_path: library_path.to_string(),
+            assets_path: assets_path.to_string(),
             base_url: base_url.to_string(),
+            assets_url: None,
             wants: Vec::new(),
             extra_wants: Vec::new(),
             manifests: HashMap::new(),
             index: None,
+        }
+    }
+
+    pub fn set_assets_url(&mut self, url: &str) {
+        self.assets_url = Some(url.to_string())
+    }
+
+    #[cfg(feature = "ctypes")]
+    #[export_name = "meta_manager_set_asset_url"]
+    pub unsafe extern "C" fn set_assets_url_c(&mut self, url: *const c_char) -> c_int {
+        let url = unsafe { CStr::from_ptr(url) }.to_str();
+        if url.is_err() {
+            return -libc::EINVAL;
+        }
+
+        self.set_assets_url(url.unwrap());
+        return 0;
+    }
+
+    pub fn get_assets_url(&self) -> &str {
+        if let Some(url) = &self.assets_url {
+            &url
+        } else {
+            ASSET_DEFAULT_URL
         }
     }
 
@@ -126,10 +158,35 @@ impl MetaManager {
         let verify_result = unsafe { manifest.verify_caching_at(&self.library_path, &os)? };
         for (lib, _error) in &verify_result {
             let at = lib.path_at_for(&self.library_path, &os);
-            ret.push(DownloadRequest::from_library(
+            ret.push(DownloadRequest::new_library(
                 lib.select_for(&os).ok_or(Error::MetaNotFound)?.clone(),
                 at,
             ))
+        }
+
+        if let Some(asset) = &manifest.asset_index {
+            if let Some(asset_index) = &asset.cache {
+                let asset_results = unsafe { asset_index.verify_caching_at(&self.assets_path)? };
+                for (asset, _error) in asset_results {
+                    ret.push(DownloadRequest::Asset {
+                        url: format!(
+                            "{}/{}/{}",
+                            self.get_assets_url(),
+                            hex::encode(&asset.hash.as_ref()[0..1]),
+                            hex::encode(asset.hash.as_ref())
+                        ),
+                        path: asset.path_at(&self.assets_path),
+                        asset,
+                        uid: manifest.uid.to_string(),
+                    })
+                }
+            } else {
+                ret.push(DownloadRequest::AssetIndex {
+                    info: asset.clone(),
+                    uid: manifest.uid.to_string(),
+                    version: manifest.version.to_string(),
+                });
+            }
         }
 
         Ok(ret)
@@ -196,6 +253,44 @@ impl MetaManager {
         package.manifest = Some(manifest);
 
         Ok(())
+    }
+
+    pub fn load_asset_index(
+        &mut self,
+        uid: &str,
+        version: &str,
+        asset_index: AssetIndex,
+    ) -> Result<()> {
+        trace!("loaded asset index for: {}:{}", uid, version);
+        let index = self
+            .index
+            .as_mut()
+            .ok_or(Error::MetaNotFound)?
+            .get_uid_mut(uid)?
+            .index
+            .as_mut()
+            .ok_or(Error::MetaNotFound)?
+            .find_version_mut(version)?
+            .manifest
+            .as_mut()
+            .ok_or(Error::MetaNotFound)?
+            .asset_index
+            .as_mut()
+            .ok_or(Error::MetaNotFound)?;
+
+        index.cache = Some(asset_index);
+
+        Ok(())
+    }
+
+    pub fn load_asset_index_reader<R: Read>(
+        &mut self,
+        uid: &str,
+        version: &str,
+        reader: &mut R,
+    ) -> Result<()> {
+        let index = AssetIndex::from_reader(reader)?;
+        self.load_asset_index(uid, version, index)
     }
 
     pub fn load(&mut self, data: &str, file_type: FileType) -> Result<()> {
@@ -372,9 +467,10 @@ impl MetaManager {
     #[export_name = "meta_manager_new"]
     pub unsafe extern "C" fn new_c(
         library_path: *const c_char,
+        assets_path: *const c_char,
         base_url: *const c_char,
     ) -> *mut Self {
-        unsafe { Self::new_c_err(library_path, base_url) }
+        unsafe { Self::new_c_err(library_path, assets_path, base_url) }
             .map(|c| Box::into_raw(Box::new(c)))
             .unwrap_or(core::ptr::null_mut())
     }
@@ -387,13 +483,19 @@ impl MetaManager {
     }
 
     #[cfg(feature = "ctypes")]
-    unsafe fn new_c_err(library_path: *const c_char, base_url: *const c_char) -> Result<Self> {
+    unsafe fn new_c_err(
+        library_path: *const c_char,
+        assets_path: *const c_char,
+        base_url: *const c_char,
+    ) -> Result<Self> {
         let library_path = unsafe { CStr::from_ptr(library_path) };
         let library_path = library_path.to_str()?;
 
+        let assets_path = unsafe { CStr::from_ptr(assets_path) }.to_str()?;
+
         let base_url = unsafe { CStr::from_ptr(base_url) }.to_str()?;
 
-        Ok(Self::new(library_path, base_url))
+        Ok(Self::new(library_path, assets_path, base_url))
     }
 }
 

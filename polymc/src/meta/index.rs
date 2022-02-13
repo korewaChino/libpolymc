@@ -6,7 +6,7 @@ use crate::{Error, Result};
 
 macro_rules! from_str_json {
     ($type:ident) => {
-        impl FromStr for $type {
+        impl std::str::FromStr for $type {
             type Err = $crate::Error;
 
             fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
@@ -16,12 +16,12 @@ macro_rules! from_str_json {
 
         impl $type {
             /// Parse data from reader into [`Self`].
-            pub fn from_reader<R: std::io::Read>(reader: &mut R) -> Result<Self> {
+            pub fn from_reader<R: std::io::Read>(reader: &mut R) -> $crate::Result<Self> {
                 Ok(serde_json::from_reader(reader)?)
             }
 
             /// Parse slice of data into [`Self`].
-            pub fn from_data(data: &[u8]) -> Result<Self> {
+            pub fn from_data(data: &[u8]) -> $crate::Result<Self> {
                 Ok(serde_json::from_slice(data)?)
             }
         }
