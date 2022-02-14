@@ -10,7 +10,7 @@ use std::os::unix::io::{FromRawFd, RawFd};
 #[cfg(all(feature = "ctypes", target_family = "windows"))]
 use std::os::windows::io::{FromRawHandle, RawHandle};
 
-pub const ASSET_DEFAULT_URL: &'static str = "https://resources.download.minecraft.net";
+pub const ASSET_DEFAULT_URL: &str = "https://resources.download.minecraft.net";
 
 use libc::c_int;
 use log::*;
@@ -66,12 +66,12 @@ impl MetaManager {
         }
 
         self.set_assets_url(url.unwrap());
-        return 0;
+        0
     }
 
     pub fn get_assets_url(&self) -> &str {
         if let Some(url) = &self.assets_url {
-            &url
+            url
         } else {
             ASSET_DEFAULT_URL
         }

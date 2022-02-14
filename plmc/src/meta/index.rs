@@ -136,7 +136,7 @@ pub async fn download_file<C: Connect + Clone + Send + Sync + 'static>(
 ) -> Result<()> {
     let filename = request.get_path().unwrap();
 
-    if verify_hash(&filename, request).is_ok() {
+    if verify_hash(filename, request).is_ok() {
         return Ok(());
     }
 

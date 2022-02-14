@@ -1,5 +1,5 @@
 // use HTTP for logging in?
-use serde_json::{json, Value};
+use serde_json::json;
 
 pub enum LoginRequest {
     Mojang {

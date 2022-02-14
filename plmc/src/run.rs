@@ -1,17 +1,16 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use clap::{App, Arg, ArgMatches};
-use console::style;
-use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
+
+use indicatif::{ProgressBar, ProgressStyle};
 use log::*;
-use mktemp::Temp;
+
 use polymc::auth::Auth;
 use polymc::instance::Instance;
 use polymc::java_wrapper::Java;
-use polymc::meta::FileType::AssetIndex;
+
 use polymc::meta::{DownloadRequest, MetaManager, Wants};
-use rand::seq::SliceRandom;
-use rand::Rng;
-use std::time::{Duration, Instant};
+
+use std::time::Instant;
 use tokio::io::{stderr, stdout};
 
 fn get_dir(sub: &str) -> String {
@@ -148,7 +147,7 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let uid = sub_matches.value_of("uid").unwrap();
     let wants = Wants::new(uid, version);
 
-    let mut manager = MetaManager::new(&lib_dir, &assets_dir, &meta_url);
+    let mut manager = MetaManager::new(&lib_dir, &assets_dir, meta_url);
     manager.search(wants);
 
     let https = hyper_rustls::HttpsConnectorBuilder::new()
@@ -160,8 +159,8 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let mut client = hyper::Client::builder().build(https);
 
     // Let's use indicatif to show the progress!
-    let mut rng = rand::thread_rng();
-    let started = Instant::now();
+    let _rng = rand::thread_rng();
+    let _started = Instant::now();
     let spinner_style = ProgressStyle::default_bar()
         .tick_chars("/-\\|")
         .progress_chars("=> ")
@@ -175,7 +174,7 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
         }
         // get the total amount of files to download
         // total is search.requests's length, but we have to return the variable because rust
-        let mut total = search.requests.len();
+        let total = search.requests.len();
         let pb = ProgressBar::new(total as u64);
         pb.set_style(spinner_style.clone());
         pb.set_message("Loading...");
@@ -201,7 +200,7 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
                     crate::meta::index::download_meta(&mut client, r, &meta_dir).await?;
                 if let Some(mut file) = file {
                     if let DownloadRequest::AssetIndex { version, uid, .. } = &r {
-                        manager.load_asset_index_reader(uid, &version, &mut file)?;
+                        manager.load_asset_index_reader(uid, version, &mut file)?;
                     } else {
                         manager.load_reader(&mut file, f_type)?;
                     }
@@ -211,7 +210,7 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
         }
         pb.finish();
     };
-    let mut instance = Instance::new(uid, &version, &mc_dir, search);
+    let mut instance = Instance::new(uid, version, &mc_dir, search);
     instance.set_libraries_path(&lib_dir);
     let mut extras = Vec::new();
 
@@ -221,10 +220,8 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     // TODO Add support for extra flags
 
     // if demo_mode is true add --demo to the extra args
-    if sub_matches.is_present("demo_mode") {
-        if sub_matches.value_of("demo_mode").unwrap() == "true" {
-            extras.push("--demo".to_string());
-        }
+    if sub_matches.is_present("demo_mode") && sub_matches.value_of("demo_mode").unwrap() == "true" {
+        extras.push("--demo".to_string());
     }
 
     instance.set_extra_args(extras);
@@ -240,12 +237,12 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
 
     let mut child = java.start(&instance, Auth::new_offline(username))?;
 
-    let mut c_stdout = child
+    let c_stdout = child
         .process
         .stdout
         .take()
         .context("Failed to get stdout")?;
-    let mut c_stderr = child
+    let c_stderr = child
         .process
         .stderr
         .take()

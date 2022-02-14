@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 
 use crate::meta::manifest::{Manifest, Requirement, Sha256Sum};
 use crate::{Error, Result};
