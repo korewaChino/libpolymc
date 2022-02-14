@@ -220,10 +220,12 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     }
     // TODO Add support for extra flags
 
-    if sub_matches.is_present("demo_mode") {
-        extras.push("--demo".to_string());
+    // if demo_mode is true add --demo to the extra args
+    if sub_matches.is_present("demo_mode"){
+        if sub_matches.value_of("demo_mode").unwrap() == "true" {
+            extras.push("--demo".to_string());
+        }
     }
-
 
     instance.set_extra_args(extras);
 

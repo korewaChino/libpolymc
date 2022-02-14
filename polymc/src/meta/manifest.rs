@@ -65,7 +65,7 @@ impl Manifest {
 
         let index = self.asset_index.as_ref().unwrap();
         let mut path = Path::new(at).to_path_buf();
-        path.push("indexs");
+        path.push("indexes");
         path.push(format!("{}.json", &index.id));
         Some(path.display().to_string())
       }
