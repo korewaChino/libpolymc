@@ -18,6 +18,7 @@ async fn main_ret() -> i32 {
         .color(ColorChoice::Auto)
         .subcommand(run_raw::app())
         .subcommand(run::app())
+        .setting(clap::AppSettings::SubcommandRequiredElseHelp)
         .subcommand(meta::app());
 
     let matches = app.get_matches();
