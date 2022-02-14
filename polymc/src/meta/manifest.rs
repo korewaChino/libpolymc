@@ -59,9 +59,7 @@ impl Manifest {
     }
 
     pub fn assets_path_at(&self, at: &str) -> Option<String> {
-        if self.asset_index.is_none() {
-            return None;
-        }
+        self.asset_index.as_ref()?;
 
         let index = self.asset_index.as_ref().unwrap();
         let mut path = Path::new(at).to_path_buf();

@@ -1,11 +1,7 @@
-use std::io::{stderr, stdout, Read, Write};
-
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{bail, Result};
 use clap::{App, Arg, ArgMatches};
 use log::*;
 use polymc::auth::Auth;
-use polymc::instance::Instance;
-use polymc::java_wrapper::Java;
 
 pub(crate) fn app() -> App<'static> {
     App::new("run-raw")
@@ -68,12 +64,12 @@ pub(crate) fn run(sub_matches: &ArgMatches) -> Result<i32> {
     debug!("Running raw minecraft installation");
     let java = sub_matches.value_of("java").unwrap();
     debug!("using java: {}", java);
-    let version = sub_matches.value_of("version").unwrap();
-    let dir = sub_matches.value_of("mc_dir").unwrap();
+    let _version = sub_matches.value_of("version").unwrap();
+    let _dir = sub_matches.value_of("mc_dir").unwrap();
 
     let auth = sub_matches.value_of("username").unwrap();
     // TODO: more than offline
-    let auth = Auth::new_offline(auth);
+    let _auth = Auth::new_offline(auth);
 
     /*let mut instance = Instance::new(auth.get_username(), version, dir);
     let java = Java::new(java);

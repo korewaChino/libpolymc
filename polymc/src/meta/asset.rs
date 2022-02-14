@@ -125,16 +125,14 @@ impl Asset {
     pub unsafe fn verify_caching_at(&self, at: &str) -> Result<()> {
         if unsafe { *self.verified.get() } {
             Ok(())
+        } else if let Err(e) = self.verify_at(at) {
+            Err(e)
         } else {
-            if let Err(e) = self.verify_at(at) {
-                Err(e)
-            } else {
-                unsafe {
-                    let verified = &mut *self.verified.get();
-                    *verified = true;
-                }
-                Ok(())
+            unsafe {
+                let verified = &mut *self.verified.get();
+                *verified = true;
             }
+            Ok(())
         }
     }
 }

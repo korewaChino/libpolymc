@@ -1,6 +1,6 @@
-use crate::meta::manifest::{Sha1Sum, Sha256Sum};
+use crate::meta::manifest::Sha256Sum;
 use crate::meta::{Asset, AssetIndexInfo, MetaIndexPackage, PackageVersion};
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 use std::fmt::{Display, Formatter};
 use std::os::raw::c_char;
 use std::path::PathBuf;
