@@ -7,6 +7,7 @@ use std::fs::OpenOptions;
 pub(crate) fn app() -> App<'static> {
     App::new("manifest")
         .about("Parse a minecraft meta definition")
+        .setting(clap::AppSettings::ArgRequiredElseHelp)
         .arg(
             Arg::new("file")
                 .long("file")

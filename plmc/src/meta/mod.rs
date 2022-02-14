@@ -8,6 +8,7 @@ pub(crate) fn app() -> App<'static> {
     App::new("meta")
         .about("Parse meta files and print the rust representation of them")
         .subcommand(manifest::app())
+        .setting(clap::AppSettings::ArgRequiredElseHelp)
         .subcommand(index::app())
 }
 

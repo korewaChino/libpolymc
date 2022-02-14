@@ -14,6 +14,7 @@ pub(crate) fn app() -> App<'static> {
     App::new("index")
         .about("Parse a meta index definition")
         .arg(Arg::new("file").long("file").short('i').takes_value(true))
+        .setting(clap::AppSettings::ArgRequiredElseHelp)
         .subcommand(
             App::new("search")
                 .about("Search in meta index")
