@@ -162,11 +162,11 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     // Let's use indicatif to show the progress!
     let mut rng = rand::thread_rng();
     let started = Instant::now();
-    let spinner_style = ProgressStyle::default_spinner()
-        .tick_chars("-\\|/")
-        .template("{prefix:.bold.dim} {spinner} {wide_msg}");
+    let spinner_style = ProgressStyle::default_bar()
+        .tick_chars("/-\\|")
+        .progress_chars("=> ")
+        .template("{prefix:.bold.dim} {spinner} [{bar}] {msg}");
         println!("Downloading Assets...");
-    // get total 
 
     let search = loop {
         let search = manager.continue_search()?;
@@ -185,13 +185,13 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
             if r.is_file() {
                 // print download progress
                 // set the progress bar to the current file
-                pb.set_message(format!("Downloading {}", r.get_url()));
+                pb.set_message(format!("[{}/{}] Downloading {}",pb.position(),total, r.get_url()));
                 //println!("Downloading {}", r.get_url());
                 crate::meta::index::download_file(&mut client, r).await?;
                 pb.inc(1);
             } else {
                 // print download progress
-                pb.set_message(format!("Downloading {}", r.get_url()));
+                pb.set_message(format!("Loading Metadata from {}", r.get_url()));
                 let (file, f_type) =
                     crate::meta::index::download_meta(&mut client, r, &meta_dir).await?;
                 if let Some(mut file) = file {
@@ -204,7 +204,7 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
                 pb.inc(1);
             }
         }
-        pb.finish_and_clear();
+        pb.finish();
     };
 
     let mut instance = Instance::new(uid, &version, &mc_dir, search);
