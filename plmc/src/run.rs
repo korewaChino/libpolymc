@@ -206,11 +206,26 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
         }
         pb.finish();
     };
-
-    let mut instance = Instance::new(uid, &version, &mc_dir, search);
+    let mut instance = Instance::new(
+        uid,
+        &version,
+        &mc_dir,
+        search,
+    );
     instance.set_libraries_path(&lib_dir);
+    let mut extras = Vec::new();
 
+    if let Some(extra_args) = sub_matches.values_of("extra_args") {
+        extras.extend(extra_args.map(ToString::to_string));
+    }
     // TODO Add support for extra flags
+
+    if sub_matches.is_present("demo_mode") {
+        extras.push("--demo".to_string());
+    }
+
+
+    instance.set_extra_args(extras);
 
     if let Some(dir) = sub_matches.value_of("natives_dir") {
         instance.set_natives_path(dir);

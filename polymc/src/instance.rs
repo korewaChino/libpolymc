@@ -110,6 +110,10 @@ impl Instance {
         }
     }
 
+    pub fn set_extra_args(&mut self, args: Vec<String>) {
+        self.extra_args = args.to_vec();
+    }
+
     /// Set the natives path.
     pub fn set_natives_path(&mut self, path: &str) {
         self.natives_path = Some(path.to_string())
