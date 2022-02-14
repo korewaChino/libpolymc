@@ -58,6 +58,18 @@ impl Manifest {
         ret.join(":")
     }
 
+    pub fn assets_path_at(&self, at: &str) -> Option<String> {
+        if self.asset_index.is_none() {
+          return None;
+        }
+
+        let index = self.asset_index.as_ref().unwrap();
+        let mut path = Path::new(at).to_path_buf();
+        path.push("indexs");
+        path.push(format!("{}.json", &index.id));
+        Some(path.display().to_string())
+      }
+
     pub fn verify_at<S: AsRef<std::ffi::OsStr> + ?Sized>(
         &self,
         path: &S,

@@ -10,7 +10,7 @@ use log::*;
 use crate::auth::Auth;
 use crate::instance::Instance;
 use crate::meta::manifest::OS;
-use crate::Result;
+use crate::{Result, Error};
 
 #[derive(Debug)]
 #[repr(C)]
@@ -120,7 +120,7 @@ impl Java {
             .arg("--accessToken")
             .arg(auth.get_token().unwrap_or("0"))
             .arg("--assetIndex")
-            .arg(&instance.version)
+            .arg(&instance.manifests.get(&instance.uid).ok_or(Error::MetaNotFound)?.asset_index.as_ref().ok_or(Error::MetaNotFound)?.id)
             .arg("--width")
             .arg(instance.config.width.to_string())
             .arg("--height")

@@ -193,8 +193,8 @@ pub async fn download_meta<C: Connect + Clone + Send + Sync + 'static>(
         DownloadRequest::Manifest { uid, version, .. } => {
             format!("{}/{}/{}.json", meta_dir, uid, version)
         }
-        DownloadRequest::AssetIndex { info, uid, .. } => {
-            format!("{}/{}/assets/{}.json", meta_dir, uid, info.id)
+        DownloadRequest::AssetIndex { path, .. } => {
+            path.to_string()
         }
         _ => bail!("Could not find location to store meta data in"),
     };

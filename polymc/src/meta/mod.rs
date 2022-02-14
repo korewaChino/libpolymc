@@ -185,6 +185,7 @@ impl MetaManager {
                     info: asset.clone(),
                     uid: manifest.uid.to_string(),
                     version: manifest.version.to_string(),
+                    path: manifest.assets_path_at(&self.assets_path).ok_or(Error::MetaNotFound)?,
                 });
             }
         }

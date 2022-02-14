@@ -231,6 +231,8 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
         instance.set_natives_path(dir);
     }
 
+    instance.set_assets_path(&assets_dir);
+
     let java = sub_matches.value_of("java").unwrap();
     let java = Java::new(java);
 
