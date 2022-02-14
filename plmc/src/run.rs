@@ -1,5 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use clap::{App, Arg, ArgMatches};
+use console::style;
+use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
 use log::*;
 use mktemp::Temp;
 use polymc::auth::Auth;
@@ -7,12 +9,10 @@ use polymc::instance::Instance;
 use polymc::java_wrapper::Java;
 use polymc::meta::FileType::AssetIndex;
 use polymc::meta::{DownloadRequest, MetaManager, Wants};
-use tokio::io::{stderr, stdout};
-use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
 use rand::seq::SliceRandom;
 use rand::Rng;
 use std::time::{Duration, Instant};
-use console::{style};
+use tokio::io::{stderr, stdout};
 
 fn get_dir(sub: &str) -> String {
     let mut dir = dirs::data_dir().unwrap();
@@ -166,7 +166,7 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
         .tick_chars("/-\\|")
         .progress_chars("=> ")
         .template("{prefix:.bold.dim} {spinner} [{bar}] {msg}");
-        println!("Downloading Assets...");
+    println!("Downloading Assets...");
 
     let search = loop {
         let search = manager.continue_search()?;
@@ -185,7 +185,12 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
             if r.is_file() {
                 // print download progress
                 // set the progress bar to the current file
-                pb.set_message(format!("[{}/{}] Downloading {}",pb.position(),total, r.get_url()));
+                pb.set_message(format!(
+                    "[{}/{}] Downloading {}",
+                    pb.position(),
+                    total,
+                    r.get_url()
+                ));
                 //println!("Downloading {}", r.get_url());
                 crate::meta::index::download_file(&mut client, r).await?;
                 pb.inc(1);
@@ -206,12 +211,7 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
         }
         pb.finish();
     };
-    let mut instance = Instance::new(
-        uid,
-        &version,
-        &mc_dir,
-        search,
-    );
+    let mut instance = Instance::new(uid, &version, &mc_dir, search);
     instance.set_libraries_path(&lib_dir);
     let mut extras = Vec::new();
 
@@ -221,7 +221,7 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     // TODO Add support for extra flags
 
     // if demo_mode is true add --demo to the extra args
-    if sub_matches.is_present("demo_mode"){
+    if sub_matches.is_present("demo_mode") {
         if sub_matches.value_of("demo_mode").unwrap() == "true" {
             extras.push("--demo".to_string());
         }
