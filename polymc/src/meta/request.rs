@@ -98,6 +98,7 @@ pub enum DownloadRequest {
         uid: String,
         version: String,
         info: AssetIndexInfo,
+        path: String,
     },
     Asset {
         asset: Asset,
@@ -229,6 +230,7 @@ impl DownloadRequest {
         match self {
             Self::Library { path, .. } => Some(path),
             Self::Asset { path, .. } => Some(path),
+            Self::AssetIndex { path, .. } => Some(path),
             _ => None,
         }
     }
