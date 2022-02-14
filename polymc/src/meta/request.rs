@@ -10,7 +10,7 @@ use super::manifest::LibraryDownload;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub enum FileType {
-    /// Index of Indexs in the meta directory
+    /// Index of Indexes in the meta directory
     MetaIndex,
     /// Index of versions
     Index,
