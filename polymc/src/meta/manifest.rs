@@ -31,7 +31,7 @@ pub struct Manifest {
     pub release_time: String, // FIXME: time type
     #[serde(default)]
     pub requires: Vec<Requirement>,
-    #[serde(rename = "type")]
+    #[serde(rename = "type", default)]
     pub release_type: String, // TODO: enum
     pub uid: String,
     pub version: String, // FIXME: SemVer type
@@ -328,7 +328,7 @@ impl OS {
 pub struct Requirement {
     #[serde(default)]
     pub equals: Option<String>,
-    pub suggests: String,
+    pub suggests: Option<String>,
     pub uid: String,
 }
 

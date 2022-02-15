@@ -112,8 +112,8 @@ pub struct PackageVersion {
     #[serde(default)]
     pub requires: Vec<Requirement>,
     pub sha256: Sha256Sum,
-    #[serde(rename = "type")]
-    pub release_type: String, // TODO: enum type?
+    #[serde(rename = "type", default)]
+    pub release_type: Option<String>, // TODO: enum type?
     pub version: String,
 
     /// Resolved package manifest

@@ -545,7 +545,7 @@ impl From<Requirement> for Wants {
     fn from(req: Requirement) -> Self {
         Self {
             uid: req.uid,
-            version: req.suggests,
+            version: req.suggests.unwrap_or(req.equals.unwrap_or("*".to_string())),
             release_type: None,
         }
     }

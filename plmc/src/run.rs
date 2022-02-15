@@ -119,6 +119,20 @@ pub(crate) fn app() -> App<'static> {
                 .help("Extra flags to pass to Minecraft")
                 .multiple_values(true),
         )
+        .arg(
+            Arg::new("extra_packages")
+                .long("package")
+                .short('p')
+                .takes_value(true)
+                .help("Extra packages to install"),
+        )
+        .arg(
+            Arg::new("package_version")
+                .long("package-version")
+                .short('V')
+                .takes_value(true)
+                .help("The version of the package to install"),
+        )
 }
 
 pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
@@ -151,6 +165,14 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let mut manager = MetaManager::new(&lib_dir, &assets_dir, &meta_url);
     manager.search(wants);
 
+    // check if extra packages are specified
+    let extra_packages = sub_matches.values_of("extra_packages").unwrap_or_default();
+    let package_version = sub_matches.value_of("package_version").unwrap_or_default();
+
+    for package in extra_packages {
+        manager.search(Wants::new(package, package_version));
+    }
+
     let https = hyper_rustls::HttpsConnectorBuilder::new()
         .with_native_roots()
         .https_or_http()
@@ -160,8 +182,6 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let mut client = hyper::Client::builder().build(https);
 
     // Let's use indicatif to show the progress!
-    let mut rng = rand::thread_rng();
-    let started = Instant::now();
     let spinner_style = ProgressStyle::default_bar()
         .tick_chars("|\\-/")
         .progress_chars("=> ")
