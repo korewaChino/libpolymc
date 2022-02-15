@@ -163,6 +163,7 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let wants = Wants::new(uid, version);
 
     let mut manager = MetaManager::new(&lib_dir, &assets_dir, &meta_url);
+    #[warn(unused_must_use)]
     manager.search(wants);
 
     // check if extra packages are specified
@@ -170,6 +171,7 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let package_version = sub_matches.value_of("package_version").unwrap_or_default();
 
     for package in extra_packages {
+        #[warn(unused_must_use)]
         manager.search(Wants::new(package, package_version));
     }
 
