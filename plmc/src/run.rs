@@ -163,7 +163,7 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let mut rng = rand::thread_rng();
     let started = Instant::now();
     let spinner_style = ProgressStyle::default_bar()
-        .tick_chars("/-\\|")
+        .tick_chars("|\\-/")
         .progress_chars("=> ")
         .template("{prefix:.bold.dim} {spinner} [{bar}] {msg}");
         println!("Downloading Assets...");
