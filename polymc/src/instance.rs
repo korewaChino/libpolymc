@@ -260,7 +260,7 @@ mod test {
 
     use super::*;
     use std::path::Path;
-/*  
+    /*
     these tests are broken because we also need to make a fake downloader and idk how to do that
     #[test]
     fn get_path() {

@@ -60,7 +60,7 @@ impl Manifest {
 
     pub fn assets_path_at(&self, at: &str) -> Option<String> {
         if self.asset_index.is_none() {
-          return None;
+            return None;
         }
 
         let index = self.asset_index.as_ref().unwrap();
@@ -68,7 +68,7 @@ impl Manifest {
         path.push("indexes");
         path.push(format!("{}.json", &index.id));
         Some(path.display().to_string())
-      }
+    }
 
     pub fn verify_at<S: AsRef<std::ffi::OsStr> + ?Sized>(
         &self,

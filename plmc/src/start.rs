@@ -1,5 +1,7 @@
-use anyhow::{anyhow, Context, Result, Ok};
+use anyhow::{anyhow, Context, Ok, Result};
 use clap::{App, Arg, ArgMatches};
+use console::style;
+use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
 use log::*;
 use mktemp::Temp;
 use polymc::auth::Auth;
@@ -7,13 +9,11 @@ use polymc::instance::Instance;
 use polymc::java_wrapper::Java;
 use polymc::meta::FileType::AssetIndex;
 use polymc::meta::{DownloadRequest, MetaManager, Wants};
-use tokio::io::{stderr, stdout};
-use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
 use rand::seq::SliceRandom;
 use rand::Rng;
-use std::time::{Duration, Instant};
-use console::{style};
 use serde_json::{json, Value};
+use std::time::{Duration, Instant};
+use tokio::io::{stderr, stdout};
 
 fn get_dir(sub: &str) -> String {
     let mut dir = dirs::data_dir().unwrap();
@@ -45,21 +45,20 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
         // get instance profile from {plmc_dir}/instances/{instance}
         get_dir("instances") + "/" + format!("{}.json", instance).as_str()
     };
-        let contents = std::fs::read_to_string(instance).context("Could not read instance file")?;
-        // println!("{}", contents);
-        let config: serde_json::Value =
+    let contents = std::fs::read_to_string(instance).context("Could not read instance file")?;
+    // println!("{}", contents);
+    let config: serde_json::Value =
         serde_json::from_str(&contents).expect("Invalid JSON in instance file");
-        println!("{:#?}", config);
-        // get name from config
-        let name = config["name"].as_str().unwrap_or("Unnamed instance");
-        println!("Starting instance {}", name);
+    println!("{:#?}", config);
+    // get name from config
+    let name = config["name"].as_str().unwrap_or("Unnamed instance");
+    println!("Starting instance {}", name);
 
     Ok(1)
 }
 
-
 #[cfg(test)]
-mod test{
+mod test {
     use super::*;
     use std::fs::File;
     use std::io::prelude::*;

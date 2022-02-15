@@ -185,7 +185,9 @@ impl MetaManager {
                     info: asset.clone(),
                     uid: manifest.uid.to_string(),
                     version: manifest.version.to_string(),
-                    path: manifest.assets_path_at(&self.assets_path).ok_or(Error::MetaNotFound)?,
+                    path: manifest
+                        .assets_path_at(&self.assets_path)
+                        .ok_or(Error::MetaNotFound)?,
                 });
             }
         }
@@ -545,7 +547,9 @@ impl From<Requirement> for Wants {
     fn from(req: Requirement) -> Self {
         Self {
             uid: req.uid,
-            version: req.suggests.unwrap_or(req.equals.unwrap_or("*".to_string())),
+            version: req
+                .suggests
+                .unwrap_or(req.equals.unwrap_or("*".to_string())),
             release_type: None,
         }
     }
