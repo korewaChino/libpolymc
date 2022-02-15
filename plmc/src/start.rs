@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Context, Result, Ok};
 use clap::{App, Arg, ArgMatches};
 use log::*;
 use mktemp::Temp;
@@ -36,15 +36,40 @@ pub(crate) fn app() -> App<'static> {
                 .required(true),
         )
 }
+pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
+    let instance = sub_matches.value_of("instance").unwrap();
+    // check if instance is a path
+    let instance = if instance.contains("/") {
+        instance.to_string()
+    } else {
+        // get instance profile from {plmc_dir}/instances/{instance}
+        get_dir("instances") + "/" + format!("{}.json", instance).as_str()
+    };
+        let contents = std::fs::read_to_string(instance).context("Could not read instance file")?;
+        // println!("{}", contents);
+        let config: serde_json::Value =
+        serde_json::from_str(&contents).expect("Invalid JSON in instance file");
+        println!("{:#?}", config);
+        // get name from config
+        let name = config["name"].as_str().unwrap_or("Unnamed instance");
+        println!("Starting instance {}", name);
 
-pub(crate) fn run(matches: &ArgMatches) -> Result<()> {
-    let instance = matches.value_of("instance").unwrap();
-    // Check if instance is is a path
-    if instance.contains("/") {
-        let instance = instance.to_string();
-    }
-    // else the instance is {PLMC_DIR}/instances/{instance}.json
-    else {
-        let instance = get_dir("instances") + "/" + instance + ".json";
+    Ok(1)
+}
+
+
+#[cfg(test)]
+mod test{
+    use super::*;
+    use std::fs::File;
+    use std::io::prelude::*;
+    fn test_run() {
+        let mut file = File::create("test.json").unwrap();
+        file.write_all(b"{\"test\":\"test\"}").unwrap();
+        file.sync_all().unwrap();
+        file.seek(std::io::SeekFrom::Start(0)).unwrap();
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).unwrap();
+        println!("{}", contents);
     }
 }

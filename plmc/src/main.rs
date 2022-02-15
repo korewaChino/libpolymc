@@ -1,6 +1,7 @@
 mod meta;
 mod run;
 mod run_raw;
+mod start;
 
 use clap::{App, ColorChoice};
 
@@ -19,7 +20,8 @@ async fn main_ret() -> i32 {
         .subcommand(run_raw::app())
         .subcommand(run::app())
         .setting(clap::AppSettings::SubcommandRequiredElseHelp)
-        .subcommand(meta::app());
+        .subcommand(meta::app())
+        .subcommand(start::app());
 
     let matches = app.get_matches();
 
@@ -27,6 +29,7 @@ async fn main_ret() -> i32 {
         Some(("run-raw", sub_matches)) => run_raw::run(sub_matches),
         Some(("run", sub_matches)) => run::run(sub_matches).await,
         Some(("meta", sub_matches)) => meta::run(sub_matches).await,
+        Some(("start", sub_matches)) => start::run(sub_matches).await,
         _ => unreachable!(),
     };
 
