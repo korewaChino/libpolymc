@@ -146,7 +146,8 @@ impl Java {
             .arg("--username")
             .arg(auth.get_username())
             .arg("--version")
-            .arg(&instance.version)
+            .arg(env!("CARGO_PKG_NAME"))
+            //.arg(&instance.version)
             .arg(&instance.extra_args.join(" "))
             .current_dir(&instance.minecraft_path);
 
