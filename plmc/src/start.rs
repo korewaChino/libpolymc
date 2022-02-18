@@ -54,7 +54,9 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let name = config["name"].as_str().unwrap_or("Unnamed instance");
     println!("Starting instance {}", name);
 
-    let meta_url = config["base_url"].as_str().unwrap_or("https://meta.polymc.org/v1");
+    let meta_url = config["base_url"]
+        .as_str()
+        .unwrap_or("https://meta.polymc.org/v1");
     let meta_dir = get_dir("meta");
     let lib_dir = get_dir("lib");
     let default_mc_dir = get_dir("game");
@@ -66,7 +68,6 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let uid = config["uid"].as_str().unwrap_or("net.minecraft");
     let java = config["java_path"].as_str().unwrap();
 
-
     let wants = Wants::new(uid, version);
 
     let mut manager = MetaManager::new(&lib_dir, &assets_dir, &meta_url);
@@ -77,7 +78,7 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     //let extra_packages = sub_matches.values_of("extra_packages").unwrap_or_default();
     //let package_version = sub_matches.value_of("package_version").unwrap_or_default();
 
-/*     for package in extra_packages {
+    /*     for package in extra_packages {
         #[warn(unused_must_use)]
         manager.search(Wants::new(package, package_version));
     } */
@@ -150,18 +151,18 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     // TODO Add support for extra flags
 
     // if demo_mode is true add --demo to the extra args
-/*     if sub_matches.is_present("demo_mode") {
-        if sub_matches.value_of("demo_mode").unwrap() == "true" {
-            extras.push("--demo".to_string());
-        }
-    }
- */
+    /*     if sub_matches.is_present("demo_mode") {
+           if sub_matches.value_of("demo_mode").unwrap() == "true" {
+               extras.push("--demo".to_string());
+           }
+       }
+    */
     instance.set_extra_args(extras);
 
-/*     if let Some(dir) = sub_matches.value_of("natives_dir") {
-        instance.set_natives_path(dir);
-    }
- */
+    /*     if let Some(dir) = sub_matches.value_of("natives_dir") {
+           instance.set_natives_path(dir);
+       }
+    */
     instance.set_assets_path(&assets_dir);
 
     let java = Java::new(java);
@@ -195,8 +196,6 @@ pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let exit = child.process.wait()?;
 
     Ok(exit.code().context("Failed to get exit code")?)
-
-
 }
 
 #[cfg(test)]
