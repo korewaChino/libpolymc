@@ -2,6 +2,7 @@ mod meta;
 mod run;
 mod run_raw;
 mod start;
+mod login;
 
 use clap::{App, ColorChoice};
 
@@ -21,7 +22,8 @@ async fn main_ret() -> i32 {
         .subcommand(run::app())
         .setting(clap::AppSettings::SubcommandRequiredElseHelp)
         .subcommand(meta::app())
-        .subcommand(start::app());
+        .subcommand(start::app())
+        .subcommand(login::app());
 
     let matches = app.get_matches();
 
@@ -30,6 +32,7 @@ async fn main_ret() -> i32 {
         Some(("run", sub_matches)) => run::run(sub_matches).await,
         Some(("meta", sub_matches)) => meta::run(sub_matches).await,
         Some(("start", sub_matches)) => start::run(sub_matches).await,
+        Some(("login", sub_matches)) => login::run(sub_matches).await,
         _ => unreachable!(),
     };
 
