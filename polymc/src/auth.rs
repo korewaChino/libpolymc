@@ -90,8 +90,8 @@ impl LoginRequest {
 
 pub enum Auth {
     Offline { username: String },
-    Mojang { username: String, token: String },
-    MSFT { token: String },
+    Mojang { username: String, token: String, uuid: String },
+    MSFT { username: String, token: String, uuid: String },
 }
 
 impl Auth {
