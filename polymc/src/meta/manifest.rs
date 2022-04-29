@@ -55,7 +55,18 @@ impl Manifest {
             ret.push(jar.name.path_at(path).display().to_string())
         }
 
-        ret.join(":")
+        // I have spent an hour figuring out why I can't split strings, And finally found this like of code.
+
+        // I did it. I finally did it. I have finally made this code cross-platform.
+        // Holy shit. Kill me now.
+        #[cfg(windows)]
+        {
+            ret.join(";")
+        }
+        #[cfg(not(windows))]
+        {
+            ret.join(":")
+        }
     }
 
     pub fn assets_path_at(&self, at: &str) -> Option<String> {
@@ -457,6 +468,22 @@ impl LibraryName {
         }
 
         path
+    }
+}
+
+//TODO: Just use LibraryName for this?
+#[derive(Debug, Clone)]
+pub struct Package{
+    pub name: String,
+    pub version: String
+}
+
+impl Package {
+    fn new(name: &str, version: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            version: version.to_string()
+        }
     }
 }
 

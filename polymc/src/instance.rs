@@ -95,6 +95,7 @@ impl Instance {
 
     /// Set the libraries path.
     pub fn set_libraries_path(&mut self, path: &str) {
+        // Convert to an absolute path
         self.libraries_path = Some(path.to_string())
     }
 
@@ -226,7 +227,19 @@ impl Instance {
         for (_k, v) in &self.manifests {
             ret.push(v.build_class_path_at(&self.get_libraries_path(), &OS::get()));
         }
-        ret.join(":")
+        // The following lines is breaking all Windows builds.
+        // WHY IN THE FUCK ARE YOU STILL SEPERATED BY A COLON? I SWEAR TO GOD I TOLD YOU TO USE SEMICOLONS!!!!!!!!!!!!!!
+        // RUST WHAT THE FUCK IS WRONG WITH YOU
+        // TODO: WHAT THE FUCK?
+        // Check if windows
+        #[cfg(windows)]
+        {
+            ret.join(";")
+        }
+        #[cfg(not(windows))]
+        {
+            ret.join(":")
+        }
     }
 
     pub fn get_manifest_extra_jvm_args(&self, platform: &OS) -> Vec<String> {

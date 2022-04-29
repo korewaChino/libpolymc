@@ -131,6 +131,7 @@ mod test {
         let mojang = Auth::Mojang {
             username: "mojang".to_string(),
             token: "".to_string(),
+            uuid: "".to_string(),
         };
         assert_eq!(mojang.get_username(), "mojang");
     }

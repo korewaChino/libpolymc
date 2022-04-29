@@ -1,3 +1,4 @@
+use core::fmt;
 //use std::os::raw::c_int;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
@@ -88,7 +89,16 @@ impl Java {
         // TODO: check java version before starting minecraft
         // TODO: propagate OS from here into every leaf functions
         let platform = OS::get();
+        // Check if Windows
+        /* if platform.name == "windows" {
+            // make format as follows:
+            // & "{}"
+            let mut command = Command::new("&");
+            command.args(&self.java);
+        } */
 
+        // Generate Minecraft folder
+        std::fs::create_dir_all(&instance.minecraft_path)?;
         let mut command = Command::new(&self.java);
         command
             .args(instance.get_manifest_extra_jvm_args(&platform))
@@ -151,7 +161,7 @@ impl Java {
             .arg(&instance.extra_args.join(" "))
             .current_dir(&instance.minecraft_path);
 
-        debug!(
+        println!(
             "Starting minecraft: {} {}",
             command.get_program().to_str().unwrap_or("error"),
             command

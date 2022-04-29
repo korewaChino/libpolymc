@@ -3,6 +3,10 @@ name = "polymc"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "polymc-cli"
+path = "src/main.rs"
+
 [lib]
 name = "polymc"
 crate-type = [ "cdylib", "staticlib", "rlib" ]
@@ -21,7 +25,16 @@ err-derive = "0.3"
 log = "0.4.14"
 ring = "0.16.20"
 hex = "0.4.3"
-zip = "0.5.13"
-
-[target.'cfg(unix)'.dependencies]
-libc = "0.2.117"
+zip = "0.6.2"
+libc = "0.2.124"
+anyhow = "1.0.53"
+clap = { version = "3.0.14", features = [ "env" ] }
+pretty_env_logger = "0.4.0"
+tokio = { version = "1", features = ["full"] }
+hyper = "0.14.17"
+hyper-rustls = "0.23.0"
+mktemp = "0.4.1"
+dirs = "4.0.0"
+indicatif = "0.16.2"
+rand = "0.8.4"
+console = "0.15.0"

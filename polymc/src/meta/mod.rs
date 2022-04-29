@@ -554,12 +554,13 @@ impl From<Requirement> for Wants {
         }
     }
 }
-
+#[derive(Debug, Clone)]
 pub struct SearchResult {
     pub requests: Vec<DownloadRequest>,
     pub manifests: HashMap<String, Manifest>,
     pub uid: String,
 }
+// Implement copy for SearchResult
 
 impl SearchResult {
     pub fn new(requests: Vec<DownloadRequest>, uid: &str) -> Self {
@@ -570,7 +571,7 @@ impl SearchResult {
         }
     }
 
-    #[export_name = "search_result_is_ready"]
+
     pub extern "C" fn is_ready(&self) -> bool {
         self.requests.is_empty()
     }

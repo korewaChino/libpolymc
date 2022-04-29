@@ -13,3 +13,7 @@
 # Added by cargo
 
 /target
+
+
+# For testing
+test/

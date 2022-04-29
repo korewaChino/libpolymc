@@ -4,6 +4,7 @@ pub mod error;
 pub mod instance;
 pub mod java_wrapper;
 pub mod meta;
+pub mod launcher;
 
 pub use error::{Error, Result};
 use std::os::raw::c_char;

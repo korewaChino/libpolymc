@@ -1,0 +1,9 @@
+{
+    "rust-analyzer.runnableEnv": [
+        {
+            "env": {
+                "RUST_LOG": "debug",
+            }
+        }
+    ]
+}
