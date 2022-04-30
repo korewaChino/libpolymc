@@ -17,3 +17,4 @@
 
 # For testing
 test/
+.env

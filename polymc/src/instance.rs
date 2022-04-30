@@ -230,7 +230,7 @@ impl Instance {
         // The following lines is breaking all Windows builds.
         // WHY IN THE FUCK ARE YOU STILL SEPERATED BY A COLON? I SWEAR TO GOD I TOLD YOU TO USE SEMICOLONS!!!!!!!!!!!!!!
         // RUST WHAT THE FUCK IS WRONG WITH YOU
-        // TODO: WHAT THE FUCK?
+        // NOTE: Check polymc::meta::manifest::Manifest::build_class_path_at. Skill issue.
         // Check if windows
         #[cfg(windows)]
         {

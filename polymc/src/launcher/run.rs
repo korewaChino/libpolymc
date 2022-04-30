@@ -5,7 +5,7 @@ use crate::{auth::Auth, meta::SearchResult};
 use crate::java_wrapper::Java;
 use crate::instance::Instance;
 use crate::meta::{MetaManager, Wants, DownloadRequest};
-
+use crate::util::*;
 use anyhow::{anyhow, Context, Result};
 use clap::{App, Arg, ArgMatches};
 use console::style;
@@ -17,16 +17,6 @@ use rand::Rng;
 use std::env;
 use std::time::{Duration, Instant};
 use tokio::io::{stderr, stdout};
-
-fn get_dir(sub: &str) -> String {
-    //let mut dir = dirs::current_dir.unwrap();
-    // current dir
-    let mut dir = env::current_dir().unwrap();
-    //dir.push("polymc");
-    dir.push("test");
-    dir.push(sub);
-    dir.display().to_string()
-}
 
 pub fn app() -> App<'static> {
     App::new("run")
