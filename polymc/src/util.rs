@@ -98,21 +98,3 @@ pub async fn fetch_queries(port: u16) -> Query {
     let q: Query = serde_urlencoded::from_str(&query.unwrap().query().unwrap()).unwrap();
     q
 }
-
-#[cfg(test)]
-mod test_super {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_() {
-        let funny = fetch_queries(8080).await;
-        println!("{:#?}", funny);
-    }
-
-    #[test]
-    fn tsss() {
-        let parsed_url = Url::parse("http://example.com/?a=1&b=2&c=3").unwrap();
-        let hash_query: HashMap<_, _> = parsed_url.query_pairs().into_owned().collect();
-        println!("{:#?}", hash_query);
-    }
-}

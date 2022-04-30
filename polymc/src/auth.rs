@@ -283,8 +283,4 @@ mod test {
         };
         assert_eq!(mojang.get_username(), "mojang");
     }
-    #[tokio::test]
-    async fn ms_auth() {
-        Auth::new_microsoft(None).await;
-    }
 }
