@@ -21,13 +21,26 @@ lazy_static! {
 
 pub fn get_dir(sub: &str) -> String {
     //TODO: Change this back to home dir
-    //let mut dir = dirs::current_dir.unwrap();
-    // current dir
-    let mut dir = env::current_dir().unwrap();
-    //dir.push("polymc");
-    dir.push("test");
-    dir.push(sub);
-    dir.display().to_string()
+
+    dotenv::dotenv().ok();
+    // get environment variable called "POLYMC_DIR"
+
+    if let Ok(dir) = env::var("POLYMC_DIR") {
+        // if it exists, return it
+        return dir;
+    } else{
+        //let mut dir = dirs::data_dir().unwrap();
+        //dir.push("polymc");
+
+        // For production, comment below and uncomment above
+        let mut dir = env::current_dir().unwrap();
+        dir.push("test");
+
+        dir.push(sub);
+        dir.display().to_string()
+    }
+
+
 }
 
 pub fn main_dir() -> String {
@@ -60,7 +73,9 @@ async fn handle_queries(_req: Request<Body>) -> Result<Response<Body>, Infallibl
         let _ = tx.send(());
     }
 
-    Ok(Response::new(format!("{:#?}", _req).into()))
+    // Send a response that automatically closes the tab
+    Ok(Response::new(Body::from("<script>window.close()</script>")))
+    //Ok(Response::new(format!("{:#?}", _req).into()))
 }
 #[allow(unused_must_use)] // graceful.wait is used to wait for requests
 pub async fn fetch_queries(port: u16) -> Query {

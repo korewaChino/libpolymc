@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum Auth {
     Offline {
         auth_type: String,
@@ -47,7 +48,7 @@ impl Auth {
         match self {
             Auth::Offline { ref username, .. } => username,
             Auth::Mojang { ref username, .. } => username,
-            Auth::MSFT { .. } => unimplemented!(), // TODO: Get the username later
+            Auth::MSFT { ref username, .. } => username,
         }
     }
 
@@ -104,7 +105,7 @@ impl Auth {
         let client = reqwest::Client::new();
 
         println!("Fetching access token");
-        let access_token = client
+        let microsoft_access_token = client
             .post("https://login.live.com/oauth20_token.srf")
             .form(&[
                 ("client_id", client_id),
@@ -122,7 +123,8 @@ impl Auth {
 
         //println!("{:#?}", access_token);
 
-        let access_token = access_token["access_token"].as_str().unwrap();
+        let access_token = microsoft_access_token["access_token"].as_str().unwrap();
+        let refresh_token = microsoft_access_token["refresh_token"].as_str().unwrap();
 
         let json = serde_json::json!({
             "Properties": {
@@ -238,7 +240,7 @@ impl Auth {
             .await
             .expect("Failed to get json");
 
-        println!("{:#?}", profile);
+        //println!("{:#?}", profile);
 
         let username = profile["name"].as_str().unwrap();
         let id = profile["id"].as_str().unwrap();
@@ -249,7 +251,7 @@ impl Auth {
             token: access_token.to_string(),
             uuid: id.to_string(),
             // TODO: Also save refresh token
-            refresh_token: "".to_string(),
+            refresh_token: refresh_token.to_string(),
         }
     }
 }

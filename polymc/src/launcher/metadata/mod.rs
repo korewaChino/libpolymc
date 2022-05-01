@@ -12,7 +12,7 @@ pub fn app() -> App<'static> {
         .subcommand(index::app())
 }
 
-pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {
+pub async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     match sub_matches.subcommand() {
         Some(("manifest", sub_matches)) => manifest::run(sub_matches),
         Some(("index", sub_matches)) => index::run(sub_matches).await,

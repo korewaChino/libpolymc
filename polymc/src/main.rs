@@ -21,7 +21,8 @@ async fn main_ret() -> i32 {
                 .help("Enable debug logging"),
         )
         .subcommand(run::app())
-        .subcommand(polymc::launcher::metadata::app());
+        .subcommand(polymc::launcher::metadata::app())
+        .subcommand(polymc::launcher::login::app());
 
     let matches = app.get_matches();
 
@@ -33,6 +34,8 @@ async fn main_ret() -> i32 {
 
     let ret = match matches.subcommand() {
         Some(("run", sub_matches)) => run::run(sub_matches).await,
+        Some(("metadata", sub_matches)) => polymc::launcher::metadata::run(sub_matches).await,
+        Some(("login", sub_matches)) => polymc::launcher::login::run(sub_matches).await,
         _ => unreachable!(),
     };
 

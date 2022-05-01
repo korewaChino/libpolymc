@@ -96,6 +96,8 @@ impl Java {
             command.args(&self.java);
         } */
 
+        // Set classpath
+        std::env::set_var("CLASSPATH", &instance.get_class_paths());
         // Generate Minecraft folder
         std::fs::create_dir_all(&instance.minecraft_path)?;
         let mut command = Command::new(&self.java);
@@ -119,8 +121,8 @@ impl Java {
             .arg("-XX:G1ReservePercent=20")
             .arg("-XX:MaxGCPauseMillis=50")
             .arg("-XX:G1HeapRegionSize=32M")
-            .arg("-cp")
-            .arg(&instance.get_class_paths())
+/*             .arg("-cp")
+            .arg(&instance.get_class_paths()) */
             .arg(
                 &instance
                     .manifests
@@ -160,14 +162,23 @@ impl Java {
             .arg(&instance.extra_args.join(" "))
             .current_dir(&instance.minecraft_path);
 
+        let command_params = &mut command
+            .get_args()
+            .map(|s| s.to_str().unwrap_or("error"))
+            .collect::<Vec<&str>>();
+        // Find the position of the --accessToken argument and then move it by one position
+        // So we can have the position of the Access Token
+        let access_token_pos = command_params
+            .iter()
+            .position(|s| s == &"--accessToken")
+            .unwrap();
+        // censor the access token
+        command_params[access_token_pos + 1] = "<REDACTED>";
+
         debug!(
             "Starting minecraft: {} {}",
             command.get_program().to_str().unwrap_or("error"),
-            command
-                .get_args()
-                .map(|s| s.to_str().unwrap_or("error"))
-                .collect::<Vec<&str>>()
-                .join(" ")
+            command_params.join(" ")
         );
         trace!("in workdir: {}", &instance.minecraft_path);
 

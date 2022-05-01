@@ -12,36 +12,38 @@ use serde_json::{json, Value};
 // TODO: Actually use this.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct GlobalConfig {
-    pub config_path: String,
+    /// The default game profile.
+    pub default_profile: String,
+    /// The default user profile.
+    pub default_user_profile: String,
 }
 
 impl GlobalConfig {
     pub fn new() -> Self {
-        let mut config_path = main_dir();
-        config_path.push_str("/config.json");
-        let mut config = GlobalConfig {
-            config_path: config_path,
-        };
-        config
+        GlobalConfig {
+            default_profile: "default".to_string(),
+            default_user_profile: "".to_string(),
+        }
     }
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AuthProfile {
+    /// Name of the profile. This will usually be the username.
     pub name: String,
+    /// The Authentication object.
     pub auth: Auth,
-    pub refresh_token: Option<String>,
 }
 
 impl AuthProfile {
-    pub fn new(name: &str, auth: Auth, refresh_token: Option<String>) -> Self {
+    pub fn new(name: &str, auth: Auth) -> Self {
         AuthProfile {
             name: name.to_owned(),
             auth,
-            refresh_token,
         }
     }
+    /// Reads the configuration file from a path, and then returns it into an AuthProfile.
+    pub fn read_from_file(path: &str) -> Self {
 
-    pub async fn read_from_file(path: &str) -> Self {
         // Read the file into string
         // contents of the file as a string
         let file = fs::read_to_string(path).unwrap();
@@ -57,14 +59,14 @@ impl AuthProfile {
             Some("offline") => {
                 let username = auth["username"].as_str().unwrap();
                 let auth = Auth::new_offline(username);
-                AuthProfile::new(profile_name, auth, None)
+                AuthProfile::new(profile_name, auth)
             }
 
             Some("mojang") => {
                 let username = auth["username"].as_str().unwrap();
                 let password = auth["password"].as_str().unwrap();
                 let auth = Auth::new_mojang(username, password);
-                AuthProfile::new(profile_name, auth, None)
+                AuthProfile::new(profile_name, auth)
             }
 
             Some("microsoft") => {
@@ -80,7 +82,7 @@ impl AuthProfile {
                     uuid: id.to_string(),
                     refresh_token: refresh_token.to_string(),
                 };
-                AuthProfile::new(profile_name, auth, Some(refresh_token.to_string()))
+                AuthProfile::new(profile_name, auth)
             }
 
             _ => {
@@ -108,10 +110,14 @@ impl AuthProfile {
         let data = json!({
             "name": self.name,
             "auth": auth_json,
-            "refresh_token": self.refresh_token.as_ref().unwrap_or(&"".to_owned()),
         });
 
-        // Write the data to the file
-        file.write_all(data.to_string().as_bytes()).unwrap();
+        // Write the data to the file (pretty printed)
+        serde_json::to_writer_pretty(&mut file, &data).unwrap();
     }
 }
+
+
+
+// le command line
+
