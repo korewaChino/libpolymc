@@ -1,12 +1,12 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 pub mod auth;
+pub mod config;
 pub mod error;
 pub mod instance;
 pub mod java_wrapper;
-pub mod meta;
 pub mod launcher;
+pub mod meta;
 pub mod util;
-pub mod config;
 
 pub use error::{Error, Result};
 use std::os::raw::c_char;

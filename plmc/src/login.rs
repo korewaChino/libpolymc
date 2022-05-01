@@ -6,12 +6,13 @@ use log::*;
 use polymc::auth::Auth;
 use rand::seq::SliceRandom;
 use rand::Rng;
-use std::{time::{Duration, Instant}, string};
+use std::{
+    string,
+    time::{Duration, Instant},
+};
 
 pub(crate) fn app() -> App<'static> {
-    App::new("login")
-        .about("Login to the minecraft server")
-
+    App::new("login").about("Login to the minecraft server")
 }
 
 pub(crate) async fn run(sub_matches: &ArgMatches) -> Result<i32> {

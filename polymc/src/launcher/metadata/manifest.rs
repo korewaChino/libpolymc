@@ -1,7 +1,7 @@
+use crate::meta::manifest::{Manifest, OS};
 use anyhow::{Context, Result};
 use clap::{App, Arg, ArgMatches};
 use log::trace;
-use crate::meta::manifest::{Manifest, OS};
 use std::fs::OpenOptions;
 
 pub(crate) fn app() -> App<'static> {

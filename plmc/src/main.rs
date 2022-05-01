@@ -1,8 +1,8 @@
+mod login;
 mod meta;
 mod run;
 mod run_raw;
 mod start;
-mod login;
 
 use clap::{App, ColorChoice};
 

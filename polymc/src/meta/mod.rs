@@ -571,7 +571,6 @@ impl SearchResult {
         }
     }
 
-
     pub extern "C" fn is_ready(&self) -> bool {
         self.requests.is_empty()
     }

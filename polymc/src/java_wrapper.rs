@@ -161,7 +161,7 @@ impl Java {
             .arg(&instance.extra_args.join(" "))
             .current_dir(&instance.minecraft_path);
 
-        println!(
+        debug!(
             "Starting minecraft: {} {}",
             command.get_program().to_str().unwrap_or("error"),
             command

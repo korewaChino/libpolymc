@@ -1,24 +1,31 @@
-use std::{fs::{File, self}, io::{Read, Write}, path::Path};
+use std::{
+    fs::{self, File},
+    io::{Read, Write},
+    path::Path,
+};
 
+use crate::{auth::Auth, util::*};
+use serde::{Deserialize, Serialize};
 /// Global and local configuration.
 /// This module manages the configuration files for polymc-rs.
 use serde_json::{json, Value};
-use crate::{util::*, auth::Auth};
 // TODO: Actually use this.
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct GlobalConfig {
     pub config_path: String,
 }
 
 impl GlobalConfig {
-    pub fn new(){
+    pub fn new() -> Self {
         let mut config_path = main_dir();
         config_path.push_str("/config.json");
         let mut config = GlobalConfig {
             config_path: config_path,
         };
+        config
     }
 }
-
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AuthProfile {
     pub name: String,
     pub auth: Auth,
@@ -60,20 +67,27 @@ impl AuthProfile {
                 AuthProfile::new(profile_name, auth, None)
             }
 
-            /* Some("microsoft") => {
-                let refresh_token = &auth["refresh_token"];
+            Some("microsoft") => {
+                let username = auth["username"].as_str().unwrap();
+                let token = auth["token"].as_str().unwrap();
+                let id = auth["id"].as_str().unwrap();
+                let refresh_token = auth["refresh_token"].as_str().unwrap_or("");
                 // TODO: Also return a refresh Token
-                let auth = Auth::new_microsoft(refresh_token.as_str()).await;
+                let auth = Auth::MSFT {
+                    auth_type: "microsoft".to_string(),
+                    username: username.to_string(),
+                    token: token.to_string(),
+                    uuid: id.to_string(),
+                    refresh_token: refresh_token.to_string(),
+                };
                 AuthProfile::new(profile_name, auth, Some(refresh_token.to_string()))
-            } */
+            }
 
             _ => {
                 // Error out: Unsupported auth type
                 panic!("Unsupported auth type");
             }
-
         }
-
     }
 
     pub fn write_to_file(&self) {
@@ -81,6 +95,9 @@ impl AuthProfile {
 
         // Create the directory if it doesn't exist
         let path_obj = Path::new(&path);
+        if !path_obj.exists() {
+            fs::create_dir_all(&path).unwrap();
+        }
 
         // Make a file called {self.name}.json
         let mut file = File::create(path_obj.join(format!("{}.json", self.name))).unwrap();
@@ -96,7 +113,5 @@ impl AuthProfile {
 
         // Write the data to the file
         file.write_all(data.to_string().as_bytes()).unwrap();
-
     }
-
 }

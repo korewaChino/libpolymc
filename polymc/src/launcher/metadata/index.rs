@@ -1,3 +1,4 @@
+use crate::meta::{DownloadRequest, FileType, MetaIndex, MetaManager, Wants};
 use anyhow::{bail, Context, Result};
 use clap::{App, Arg, ArgMatches};
 use hyper::body::HttpBody;
@@ -5,7 +6,6 @@ use hyper::client::connect::Connect;
 use hyper::Client;
 use log::*;
 use mktemp::Temp;
-use crate::meta::{DownloadRequest, FileType, MetaIndex, MetaManager, Wants};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::Path;
@@ -134,8 +134,6 @@ pub async fn download_file<C: Connect + Clone + Send + Sync + 'static>(
     client: &mut Client<C>,
     request: &DownloadRequest,
 ) -> Result<()> {
-
-    
     let filename = request.get_path().unwrap();
 
     if verify_hash(&filename, request).is_ok() {
@@ -145,7 +143,7 @@ pub async fn download_file<C: Connect + Clone + Send + Sync + 'static>(
     std::fs::create_dir_all(
         Path::new(filename)
             .parent()
-            .context("Filename has no parent")?
+            .context("Filename has no parent")?,
     )?;
 
     let url = request.get_url().parse()?;

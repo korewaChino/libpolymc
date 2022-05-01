@@ -473,16 +473,16 @@ impl LibraryName {
 
 //TODO: Just use LibraryName for this?
 #[derive(Debug, Clone)]
-pub struct Package{
+pub struct Package {
     pub name: String,
-    pub version: String
+    pub version: String,
 }
 
 impl Package {
     fn new(name: &str, version: &str) -> Self {
         Self {
             name: name.to_string(),
-            version: version.to_string()
+            version: version.to_string(),
         }
     }
 }

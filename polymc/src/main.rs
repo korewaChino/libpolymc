@@ -27,6 +27,8 @@ async fn main_ret() -> i32 {
 
     if matches.is_present("debug") {
         std::env::set_var("RUST_LOG", "debug");
+    } else {
+        std::env::set_var("RUST_LOG", "info");
     }
 
     let ret = match matches.subcommand() {

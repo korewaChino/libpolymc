@@ -1,11 +1,10 @@
-
 use crate::meta::manifest::Package;
 // use upper crate
-use crate::{auth::Auth, meta::SearchResult};
-use crate::java_wrapper::Java;
 use crate::instance::Instance;
-use crate::meta::{MetaManager, Wants, DownloadRequest};
+use crate::java_wrapper::Java;
+use crate::meta::{DownloadRequest, MetaManager, Wants};
 use crate::util::*;
+use crate::{auth::Auth, meta::SearchResult};
 use anyhow::{anyhow, Context, Result};
 use clap::{App, Arg, ArgMatches};
 use console::style;
@@ -51,7 +50,7 @@ pub fn app() -> App<'static> {
                 .long("base-url")
                 .env("PLMC_BASE_URL")
                 .help("Base url of the meta server to use")
-                .takes_value(true)
+                .takes_value(true),
         )
         .arg(
             Arg::new("lib_dir")
@@ -169,7 +168,6 @@ pub async fn run(sub_matches: &ArgMatches) -> Result<i32> {
 
     let java_path = sub_matches.value_of("java").unwrap();
 
-
     let meta = MetaManager::new(&lib_dir, &assets_dir, &meta_url);
 
     let wants = Wants::new(&uid, version);
@@ -178,19 +176,13 @@ pub async fn run(sub_matches: &ArgMatches) -> Result<i32> {
     let search = results.unwrap();
     let auth = Auth::new_offline(username);
 
-    let mut instance = Instance::new(
-        &uid,
-        &version,
-        &mc_dir,
-        search
-    );
+    let mut instance = Instance::new(&uid, &version, &mc_dir, search);
 
     instance.set_libraries_path(&lib_dir);
     instance.set_assets_path(&assets_dir);
     instance.set_natives_path(&natives_dir);
 
-    run_instance(&instance,
-        &Java::new(java_path),auth)
+    run_instance(&instance, &Java::new(java_path), auth)
 }
 
 pub fn run_instance(instance: &Instance, java: &Java, auth: Auth) -> Result<i32> {
@@ -259,9 +251,9 @@ pub async fn download_meta(
         for r in &search.requests {
             debug!("Downloading {}", r.get_url());
             if r.is_file() {
-
                 crate::launcher::metadata::index::download_file(&mut client, r).await?;
                 // Spawn a thread and download the file
+                //tokio::spawn(crate::launcher::metadata::index::download_file(&mut client, r));
                 //let download = tokio::spawn(metaIndex::download_file(&mut client, r));
             } else {
                 let (file, f_type) = crate::launcher::metadata::index::download_meta(
