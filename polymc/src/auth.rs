@@ -1,15 +1,9 @@
-use std::borrow::BorrowMut;
 use std::env;
 
 use rand::{distributions::Alphanumeric, Rng};
 use serde::{Deserialize, Serialize};
 // use HTTP for logging in?
 use serde_json::{json, Value};
-
-use hyper::service::{make_service_fn, service_fn};
-use hyper::{Body, Request, Response, Server};
-use std::convert::Infallible;
-use std::net::SocketAddr;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Auth {
@@ -38,12 +32,6 @@ fn random_string() -> String {
         .take(16)
         .map(char::from)
         .collect()
-}
-
-async fn hello_world(_req: Request<Body>) -> Result<Response<Body>, Infallible> {
-    // print the request
-    println!("{:?}", _req);
-    Ok(Response::new("Hello, World".into()))
 }
 
 impl Auth {

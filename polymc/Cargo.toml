@@ -1,7 +1,13 @@
 [package]
 name = "polymc"
+description = "A Minecraft Launcher library"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+keywords = ["minecraft", "launcher", "library", "java"]
+workspace = "../"
+authors = ["Cappy Ishihara <cappy@cappuchino.xyz>","Finn Behrens <me@kloenk.de>"]
+repository = "https://github.com/korewaChino/libpolymc"
 
 [[bin]]
 name = "polymc-cli"
@@ -32,7 +38,7 @@ anyhow = "1.0.53"
 clap = { version = "3.0.14", features = [ "env" ] }
 pretty_env_logger = "0.4.0"
 tokio = { version = "1", features = ["full"] }
-hyper = "0.14.17"
+hyper = {version = "0.14.17", features = ["full"]}
 hyper-rustls = "0.23.0"
 mktemp = "0.4.1"
 dirs = "4.0.0"
@@ -41,6 +47,5 @@ rand = "0.8.4"
 console = "0.15.0"
 dotenv = "0.15.0"
 webbrowser = "0.7.1"
-warp = "0.3.2"
 reqwest = { version = "0.11.10", features = ["json"] }
 lazy_static = "1.4.0"

@@ -3,9 +3,8 @@ use crate::meta::SearchResult;
 use crate::{Error, Result};
 use log::trace;
 use std::collections::HashMap;
-use std::fs;
 use std::fs::OpenOptions;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
 #[derive(Debug, Clone)]
 pub struct InstanceGameConfig {
@@ -269,10 +268,10 @@ impl Instance {
 
 #[cfg(test)]
 mod test {
-    use crate::meta::DownloadRequest;
+    /* use crate::meta::DownloadRequest;
 
     use super::*;
-    use std::path::Path;
+    use std::path::Path; */
     /*
     these tests are broken because we also need to make a fake downloader and idk how to do that
     #[test]

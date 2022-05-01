@@ -1,22 +1,13 @@
-use anyhow::Context;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Request, Response, Server, Uri};
 use lazy_static::lazy_static;
-use rand::distributions::Alphanumeric;
-use rand::Rng;
-use reqwest::Url;
 use serde::Deserialize;
-use std::borrow::Cow;
-use std::collections::HashMap;
 use std::convert::Infallible;
 /// Utility functions and objects for libpolymc
 use std::env;
-use std::net::SocketAddr;
-use std::sync::mpsc;
 use std::sync::Arc;
 use tokio::sync::oneshot::Sender;
 use tokio::sync::Mutex;
-use warp::Filter;
 
 lazy_static! {
     /// Channel used to send shutdown signal - wrapped in an Option to allow
@@ -71,7 +62,7 @@ async fn handle_queries(_req: Request<Body>) -> Result<Response<Body>, Infallibl
 
     Ok(Response::new(format!("{:#?}", _req).into()))
 }
-
+#[allow(unused_must_use)] // graceful.wait is used to wait for requests
 pub async fn fetch_queries(port: u16) -> Query {
     // Credits to:
     // https://stackoverflow.com/questions/63599177/how-do-i-terminate-a-hyper-server-after-fulfilling-one-request
@@ -91,7 +82,6 @@ pub async fn fetch_queries(port: u16) -> Query {
     let graceful = server.with_graceful_shutdown(async {
         rx.await.ok();
     });
-
     graceful.await;
     // Parse this query
     let query = TOKEN.lock().await.clone();

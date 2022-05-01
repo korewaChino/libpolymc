@@ -52,10 +52,10 @@ usize_is_size_t = true
 [defines]
 "target_family = unix" = "__unix__"
 "target_family = windows" = "_WIN32"
-#"feature = ctypes" = "HAS_C_LIBRARY" # When we generate a header, we have a C library
+"feature = ctypes" = "HAS_C_LIBRARY" # When we generate a header, we have a C library
 
-# "target_os = freebsd" = "DEFINE_FREEBSD"
-# "feature = serde" = "DEFINE_SERDE"
+"target_os = freebsd" = "DEFINE_FREEBSD"
+"feature = serde" = "DEFINE_SERDE"
 
 
 

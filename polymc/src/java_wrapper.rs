@@ -1,4 +1,3 @@
-use core::fmt;
 //use std::os::raw::c_int;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};

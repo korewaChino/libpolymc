@@ -5,16 +5,11 @@ use crate::java_wrapper::Java;
 use crate::meta::{DownloadRequest, MetaManager, Wants};
 use crate::util::*;
 use crate::{auth::Auth, meta::SearchResult};
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use clap::{App, Arg, ArgMatches};
-use console::style;
-use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
+//use console::style;
+//use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
 use log::*;
-use mktemp::Temp;
-use rand::seq::SliceRandom;
-use rand::Rng;
-use std::env;
-use std::time::{Duration, Instant};
 use tokio::io::{stderr, stdout};
 
 pub fn app() -> App<'static> {
@@ -187,12 +182,12 @@ pub async fn run(sub_matches: &ArgMatches) -> Result<i32> {
 
 pub fn run_instance(instance: &Instance, java: &Java, auth: Auth) -> Result<i32> {
     let mut child = java.start(&instance, auth)?;
-    let mut c_stdout = child
+    let c_stdout = child
         .process
         .stdout
         .take()
         .context("Failed to get stdout")?;
-    let mut c_stderr = child
+    let c_stderr = child
         .process
         .stderr
         .take()
