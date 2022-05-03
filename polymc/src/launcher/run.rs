@@ -1,3 +1,4 @@
+use crate::config::{GlobalConfig, AuthProfile};
 use crate::meta::manifest::Package;
 // use upper crate
 use crate::instance::Instance;
@@ -85,8 +86,7 @@ pub fn app() -> App<'static> {
                 .short('u')
                 .env("PMLC_USERNAME")
                 .takes_value(true)
-                .help("The username to use for authentication")
-                .default_value("Player"),
+                .help("The username to use for authentication"),
         )
         .arg(
             Arg::new("java_extra_args")
@@ -123,9 +123,34 @@ pub fn app() -> App<'static> {
                 .takes_value(true)
                 .help("The version of the package to install"),
         )
+        
 }
 
 pub async fn run(sub_matches: &ArgMatches) -> Result<i32> {
+
+    let config = GlobalConfig::load();
+    println!("{:#?}", config);
+
+
+    // Get default login profile
+    let default_profile = config.default_user_profile;
+    // Get the username from the command line only if it's set
+    let username = if let Some(username) = sub_matches.value_of("username") {
+        username.to_string()
+    } else {
+        // Try reading the default profile to see if it's set or it's blank
+        if default_profile.is_empty() {
+            warn!("No username given and no default profile set");
+            "Player".to_string()
+        } else {
+            default_profile.clone()
+        }
+    };
+
+    // I dont even know if the above code works lol
+
+    let auth = AuthProfile::load_profile(&username).auth;
+
     let meta_url = sub_matches
         .value_of("meta_url")
         .map(ToString::to_string)
@@ -148,7 +173,7 @@ pub async fn run(sub_matches: &ArgMatches) -> Result<i32> {
         .value_of("mc_dir")
         .map(ToString::to_string)
         .unwrap_or_else(|| get_dir("minecraft"));
-    let username = sub_matches.value_of("username").unwrap();
+
 
     let assets_dir = sub_matches
         .value_of("assets_dir")
@@ -169,7 +194,7 @@ pub async fn run(sub_matches: &ArgMatches) -> Result<i32> {
 
     let results = download_meta(meta, wants, None, Some(&meta_dir)).await;
     let search = results.unwrap();
-    let auth = Auth::new_offline(username);
+    // For authentication profiles
 
     let mut instance = Instance::new(&uid, &version, &mc_dir, search);
 

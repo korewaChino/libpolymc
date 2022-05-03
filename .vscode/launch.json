@@ -38,7 +38,14 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": [
+                "--debug",
+                "run",
+                "--java",
+                "C:\\Program Files\\Microsoft\\jdk-17.0.2.8-hotspot\\bin\\java.exe",
+                "--version",
+                "1.8.9",
+            ],
             "cwd": "${workspaceFolder}"
         },
         {

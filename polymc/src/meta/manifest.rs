@@ -240,7 +240,7 @@ impl Library {
         if let Some(name) = self.natives.get(&os.name) {
             self.downloads.classifiers.get(name)
         } else {
-            Some(&self.downloads.artifact)
+            Some(&self.downloads.artifact.as_ref().unwrap())
         }
     }
 
@@ -264,7 +264,7 @@ impl Library {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LibraryDownloads {
-    pub artifact: LibraryDownload,
+    pub artifact: Option<LibraryDownload>,
     #[serde(default)]
     pub classifiers: HashMap<String, LibraryDownload>,
 }
@@ -479,7 +479,7 @@ pub struct Package {
 }
 
 impl Package {
-    fn new(name: &str, version: &str) -> Self {
+    pub fn new(name: &str, version: &str) -> Self {
         Self {
             name: name.to_string(),
             version: version.to_string(),

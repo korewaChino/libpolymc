@@ -5,7 +5,7 @@ use log::trace;
 use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::path::{Path};
-
+use j4rs::{ClasspathEntry, Jvm};
 #[derive(Debug, Clone)]
 pub struct InstanceGameConfig {
     pub min: String, // TODO: create enum type?

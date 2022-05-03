@@ -4,7 +4,7 @@ use rand::{distributions::Alphanumeric, Rng};
 use serde::{Deserialize, Serialize};
 // use HTTP for logging in?
 use serde_json::{json, Value};
-
+use anyhow::{bail, Result, Ok};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Auth {
@@ -78,12 +78,50 @@ impl Auth {
 
     // Online logins
 
-    pub fn new_mojang(username: &str, password: &str) -> Self {
+    pub async fn new_mojang(username: &str, password: &str) -> Result<Self> {
         /// Create a new Mojang auth scheme.
-        todo!()
+        // Thanks to https://mojang-api-docs.netlify.app/authentication/mojang.html for the instructions.
+        let client = reqwest::Client::new();
+
+        let json = json!({
+            "agent" : {
+              "name" : "Minecraft", // identifying which game is connecting, "Scrolls" returns Scrolls profile info
+              "version" : env!("CARGO_PKG_VERSION") // version of the agent (OPTIONAL)
+            }, // you don't even need this! "agent" : "minecraft" works fine too.
+            "username" : username, // username (legacy) or email address
+            "password" : password, // password
+            "clientToken" : "libpolymc-rs", // client token used to identify yourself (OPTIONAL)
+            "requestUser" : "true" // request a response back containing user information (OPTIONAL)
+          });
+        let mojang_login = client
+            .post("https://authserver.mojang.com/authenticate")
+            .json(&json)
+            .send()
+            .await
+            .expect("Failed to send login request")
+            .json::<Value>()
+            .await
+            .expect("Failed to parse login response");
+
+        // now process the response
+        // if the response is an error, return an error
+        if mojang_login["error"].is_string() {
+            bail!("{}", mojang_login["error"]);
+        }
+
+        // if the response is a success, return the auth scheme
+        let profile = &mojang_login["selectedProfile"];
+
+        let mojang_profile = Auth::Mojang {
+            auth_type: "mojang".to_owned(),
+            username: profile["name"].as_str().unwrap().to_owned(),
+            token: mojang_login["accessToken"].as_str().unwrap().to_owned(),
+            uuid: profile["id"].as_str().unwrap().to_owned(),
+        };
+        Ok(mojang_profile)
     }
 
-    pub async fn new_microsoft(refresh_token: Option<&str>) -> Self {
+    pub async fn new_microsoft(refresh_token: Option<&str>) -> Result<Self> {
         // Credits to https://github.com/ALinuxPerson/mcsoft-auth/ for the MSFT auth scheme.
         // TODO: Make this configurable, Currently it is a dotenv
         dotenv::from_filename(".env").ok();
@@ -245,14 +283,14 @@ impl Auth {
         let username = profile["name"].as_str().unwrap();
         let id = profile["id"].as_str().unwrap();
 
-        Auth::MSFT {
+        Ok(Auth::MSFT {
             auth_type: "microsoft".to_string(),
             username: username.to_string(),
             token: access_token.to_string(),
             uuid: id.to_string(),
             // TODO: Also save refresh token
             refresh_token: refresh_token.to_string(),
-        }
+        })
     }
 }
 

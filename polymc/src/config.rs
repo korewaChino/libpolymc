@@ -3,8 +3,9 @@ use std::{
     io::{Write},
     path::Path,
 };
-
 use crate::{auth::Auth, util::*};
+use anyhow::Ok;
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 /// Global and local configuration.
 /// This module manages the configuration files for polymc-rs.
@@ -19,12 +20,41 @@ pub struct GlobalConfig {
 }
 
 impl GlobalConfig {
+
+    /// The global configuration file.
+    /// This will be located at {main_dir()}/config.json, most of the time.
     pub fn new() -> Self {
         GlobalConfig {
             default_profile: "default".to_string(),
             default_user_profile: "".to_string(),
         }
     }
+
+    /// Load the global configuration file.
+    pub fn load() -> Self {
+        // TODO: Make this configurable with an env var.
+        let path = Path::new(&main_dir()).join("config.json");
+
+        if !path.exists() {
+            let mut file = File::create(&path).unwrap();
+            serde_json::to_writer_pretty(&mut file, &GlobalConfig::new()).unwrap();
+        }
+
+        // then load it.
+        let file = File::open(&path).unwrap();
+        let config: GlobalConfig = serde_json::from_reader(file).unwrap();
+        config
+    }
+
+    /// Save the global configuration file.
+    pub fn save(&self) -> Result<()> {
+        let path = Path::new(&main_dir()).join("config.json");
+        let mut file = File::create(&path).expect("Could not create config file");
+        serde_json::to_writer_pretty(&mut file, self).expect("Could not write config file");
+
+        Ok(())
+    }
+
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AuthProfile {
@@ -54,8 +84,8 @@ impl AuthProfile {
         let profile_name = json["name"].as_str().unwrap();
         // Get the "auth" key's value
         let auth = json["auth"].clone();
-
-        match auth["auth"].as_str() {
+        println!("{:#?}", auth["auth_type"].as_str());
+        match auth["auth_type"].as_str() {
             Some("offline") => {
                 let username = auth["username"].as_str().unwrap();
                 let auth = Auth::new_offline(username);
@@ -64,15 +94,21 @@ impl AuthProfile {
 
             Some("mojang") => {
                 let username = auth["username"].as_str().unwrap();
-                let password = auth["password"].as_str().unwrap();
-                let auth = Auth::new_mojang(username, password);
+                let token = auth["token"].as_str().unwrap();
+                let id = auth["uuid"].as_str().unwrap();
+                let auth = Auth::Mojang {
+                    auth_type: "mojang".to_string(),
+                    username: username.to_string(),
+                    token: token.to_string(),
+                    uuid: id.to_string(),
+                };
                 AuthProfile::new(profile_name, auth)
             }
 
             Some("microsoft") => {
                 let username = auth["username"].as_str().unwrap();
                 let token = auth["token"].as_str().unwrap();
-                let id = auth["id"].as_str().unwrap();
+                let id = auth["uuid"].as_str().unwrap();
                 let refresh_token = auth["refresh_token"].as_str().unwrap_or("");
                 // TODO: Also return a refresh Token
                 let auth = Auth::MSFT {
@@ -114,6 +150,16 @@ impl AuthProfile {
 
         // Write the data to the file (pretty printed)
         serde_json::to_writer_pretty(&mut file, &data).unwrap();
+    }
+
+    pub fn load_profile(name: &str) -> Self {
+        let path = Path::new(&get_dir("profiles")).join(format!("{}.json", name));
+        // Check if the file exists and is valid
+        if !path.exists() {
+            AuthProfile::new(name, Auth::new_offline(name))
+        } else {
+            AuthProfile::read_from_file(&path.to_str().unwrap())
+        }
     }
 }
 

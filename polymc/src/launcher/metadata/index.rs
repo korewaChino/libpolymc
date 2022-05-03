@@ -255,7 +255,7 @@ fn verify_hash(filename: &str, request: &DownloadRequest) -> Result<File> {
     if !request.has_hash() {
         bail!("Request has no hash");
     }
-
+    debug!("Verifying hash for {}", filename);
     let mut file = OpenOptions::new().read(true).open(&filename)?;
 
     let mut digest = ring::digest::Context::new(request.get_hash_algo().unwrap());

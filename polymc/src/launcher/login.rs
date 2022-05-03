@@ -22,7 +22,7 @@ pub async fn run(sub_matches: &ArgMatches) -> Result<i32> {
 }
 
 pub async fn msft_login() -> Result<i32> {
-    let auth = Auth::new_microsoft(None).await;
+    let auth = Auth::new_microsoft(None).await.expect("Failed to create auth");
 
     //println!("{:#?}", auth);
 

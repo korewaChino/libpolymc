@@ -9,7 +9,6 @@ async fn main() {
 }
 
 async fn main_ret() -> i32 {
-    pretty_env_logger::init();
 
     let app = App::new("polymc-cli")
         .about("libpolymc cli interface")
@@ -27,11 +26,11 @@ async fn main_ret() -> i32 {
     let matches = app.get_matches();
 
     if matches.is_present("debug") {
-        std::env::set_var("RUST_LOG", "debug");
+        std::env::set_var("RUST_LOG", "trace");
     } else {
         std::env::set_var("RUST_LOG", "info");
     }
-
+    pretty_env_logger::init();
     let ret = match matches.subcommand() {
         Some(("run", sub_matches)) => run::run(sub_matches).await,
         Some(("metadata", sub_matches)) => polymc::launcher::metadata::run(sub_matches).await,

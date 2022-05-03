@@ -5,12 +5,13 @@ use std::process::{Child, Command, Stdio};
 #[cfg(target_family = "unix")]
 use std::os::unix::io::{AsRawFd, RawFd};
 
+use anyhow::{Ok, Result};
 use log::*;
 
 use crate::auth::Auth;
 use crate::instance::Instance;
 use crate::meta::manifest::OS;
-use crate::{Error, Result};
+use crate::{Error};
 
 #[derive(Debug)]
 #[repr(C)]
@@ -139,6 +140,8 @@ impl Java {
             .arg(&instance.get_assets_path())
             .arg("--accessToken")
             .arg(auth.get_token().unwrap_or("0"))
+            .arg("--uuid")
+            .arg(auth.get_uuid().unwrap_or("0"))
             .arg("--assetIndex")
             .arg(
                 &instance
@@ -175,6 +178,7 @@ impl Java {
         // censor the access token
         command_params[access_token_pos + 1] = "<REDACTED>";
 
+        debug!("Classpath: {:#?}", std::env::var("CLASSPATH").unwrap());
         debug!(
             "Starting minecraft: {} {}",
             command.get_program().to_str().unwrap_or("error"),
