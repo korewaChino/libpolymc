@@ -129,7 +129,7 @@ pub fn app() -> App<'static> {
 pub async fn run(sub_matches: &ArgMatches) -> Result<i32> {
 
     let config = GlobalConfig::load();
-    println!("{:#?}", config);
+    //println!("{:#?}", config);
 
 
     // Get default login profile

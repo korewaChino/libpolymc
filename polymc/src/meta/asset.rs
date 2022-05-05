@@ -49,6 +49,7 @@ impl AssetIndex {
     /// # Safety
     /// This uses write without synchronization, so only run one instance on a given dataset.
     pub unsafe fn verify_caching_at(&self, at: &str) -> Result<Vec<(Asset, Error)>> {
+        info!("Verifying asset index cache at {}", at);
         let mut ret = Vec::new();
         for (_name, asset) in &self.objects {
             if let Err(e) = unsafe { asset.verify_caching_at(at) } {

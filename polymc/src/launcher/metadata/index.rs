@@ -148,14 +148,25 @@ pub async fn download_file<C: Connect + Clone + Send + Sync + 'static>(
 
     let url = request.get_url().parse()?;
 
+    // Follow redirects
     let mut res = client.get(url).await?;
 
     if !res.status().is_success() {
-        bail!(
-            "Failed to download file: {} ({})",
-            request.get_url(),
-            res.status()
-        );
+        // check status code
+        trace!("{:?}", res.status());
+        if res.status().is_redirection() {
+            // follow redirect and try again
+            let url = res.headers().get("location").unwrap().to_str()?;
+            let url = url.parse()?;
+            debug!("redirected to: {}", url);
+            res = client.get(url).await?;
+        } else {
+            bail!(
+                "Failed to download file: {} ({})",
+                request.get_url(),
+                res.status()
+            );
+        }
     }
 
     let mut file = OpenOptions::new()

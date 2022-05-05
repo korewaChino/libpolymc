@@ -227,8 +227,16 @@ impl Library {
             allow = true;
         } else {
             for r in &self.rules {
+                //debug!("{:#?}", r);
+                // TODO: Fix this. (Returns unsupported error on 1.8.9 Windows even though native Twitch libs exist.)
                 if r.action == RuleAction::Allow && !allow {
-                    allow = r.os.name == platform.name;
+                    // if r.os is Some(OS)
+                    if r.os.is_some() {
+                        allow = r.os.as_ref().unwrap().name == platform.name;
+                    } else {
+                        allow = OS::get().name == platform.name;
+                    }
+                    debug!("allow: {}", allow);
                 }
             }
         }
@@ -282,7 +290,7 @@ pub struct LibraryDownload {
 pub struct Rule {
     pub action: RuleAction,
 
-    pub os: OS,
+    pub os: Option<OS>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]

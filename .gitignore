@@ -18,3 +18,4 @@
 # For testing
 test/
 .env
+.vscode/

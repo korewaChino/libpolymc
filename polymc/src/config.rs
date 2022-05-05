@@ -84,7 +84,7 @@ impl AuthProfile {
         let profile_name = json["name"].as_str().unwrap();
         // Get the "auth" key's value
         let auth = json["auth"].clone();
-        println!("{:#?}", auth["auth_type"].as_str());
+        //println!("{:#?}", auth["auth_type"].as_str());
         match auth["auth_type"].as_str() {
             Some("offline") => {
                 let username = auth["username"].as_str().unwrap();

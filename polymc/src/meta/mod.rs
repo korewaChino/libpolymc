@@ -27,6 +27,9 @@ pub use asset::*;
 pub use index::*;
 pub use request::*;
 
+pub mod mods;
+use mods::*;
+
 pub struct MetaManager {
     pub library_path: String,
     pub assets_path: String,
@@ -163,7 +166,7 @@ impl MetaManager {
                 at,
             ))
         }
-
+        // TODO: Progress callback for this
         if let Some(asset) = &manifest.asset_index {
             if let Some(asset_index) = &asset.cache {
                 let asset_results = unsafe { asset_index.verify_caching_at(&self.assets_path)? };

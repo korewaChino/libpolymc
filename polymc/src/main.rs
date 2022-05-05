@@ -35,7 +35,8 @@ async fn main_ret() -> i32 {
         Some(("run", sub_matches)) => run::run(sub_matches).await,
         Some(("metadata", sub_matches)) => polymc::launcher::metadata::run(sub_matches).await,
         Some(("login", sub_matches)) => polymc::launcher::login::run(sub_matches).await,
-        _ => unreachable!(),
+        Some(("meta", sub_matches)) => polymc::launcher::metadata::run(sub_matches).await,
+        _ => unreachable!("{:#?}", matches),
     };
 
     if let Err(e) = ret {
